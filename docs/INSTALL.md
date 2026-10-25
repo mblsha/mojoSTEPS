@@ -32,12 +32,15 @@ and `CXX` can select an existing compiler. To load a library from another
 location, use `Forecast(library="/absolute/path/...")` or
 `MOJOSTEPS_CPU_LIBRARY` / `MOJOSTEPS_GPU_LIBRARY`.
 
-The Python wheel contains the array boundary and demo utilities only. Build the
+The Python wheel contains the array boundary, optional radar/regional adapters
+and demo utilities. Install `.[radar]` for NetCDF4, pyproj and Shapely support;
+bootstrap includes these extras. Build the
 native source from a checkout or sdist; installing the wheel alone does not
 install a Mojo runtime or native forecast library. Packaging remains source-only
 until platform/runtime distribution requirements are handled explicitly.
 
-A full 96 × 14 forecast returns 396,361,728 bytes (about 378 MiB); GPU state,
+A default 192-square, 96 × 14 forecast returns 396,361,728 bytes (378 MiB);
+a 512-square output at the same counts occupies 2.625 GiB. GPU state,
 reference arrays and comparison temporaries need additional memory. Start with
 the four-member, three-lead demo. The full benchmark was tested on 128+ GiB
 unified-memory Macs. This is not a measured minimum-memory requirement.

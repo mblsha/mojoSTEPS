@@ -7,6 +7,8 @@ The all-GPU entrypoint fits the model, creates reference-compatible random
 streams and evolves the ensemble on Metal. Host work validates/marshals input,
 launches kernels and converts the final paired-float output to caller float64.
 """
+from native_config import RuntimeOptions, merge_passes
+from native_config import TIMESTEP, PRECIP_THR, MAX_MEMBERS, MAX_LEADS, MERGE_PASSES
 from std.ffi import external_call
 from std.runtime import initialize_runtime
 from std.math import isfinite, pow
@@ -14,7 +16,7 @@ from std.memory import Pointer
 from max.algorithm import parallelize
 from max.gpu.host import DeviceBuffer, DeviceContext
 from native_fft import N, PIXELS, F64Ptr, data
-from native_core import Model, LEVELS
+from native_core import Model, LEVELS, forecast_native
 from native_rng import MT19937
 from gpu_rng import generate_normals, initialize_random
 from gpu_model import GpuModel
@@ -67,26 +69,30 @@ def steps_resident_model_probe(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, 
     steps_gpu_model_probe(input, velocity, output, velocity_float32)
 
 
-def forecast_resident[GPU_RNG: Bool, GPU_MODEL: Bool = False, GPU_SEED: Bool = False](input: F64Ptr, velocity: F64Ptr, output: F64Ptr, members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32) -> Int32:
-    if members < 1 or members > 96 or leads < 1 or leads > 14 or workers < 1 or velocity_float32 < 0 or velocity_float32 > 1:
+def forecast_resident[SIZE: Int, GPU_RNG: Bool, GPU_MODEL: Bool = False, GPU_SEED: Bool = False](input: F64Ptr, velocity: F64Ptr, output: F64Ptr, members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32, options: RuntimeOptions = RuntimeOptions()) -> Int32:
+    comptime N = SIZE
+    comptime PIXELS = SIZE * SIZE
+    comptime PARAM_EPS = 60 + 10 * PIXELS
+    comptime MERGE_PASSES = merge_passes(PIXELS)
+    if members < 1 or members > 4096 or leads < 1 or leads > 288 or workers < 1 or velocity_float32 < 0 or velocity_float32 > 1:
         return 1
     var echoes = 0
     for i in range(3 * PIXELS):
         if not isfinite(input[unsafe_offset=i]):
             return 2
-        echoes += Int(input[unsafe_offset=i] >= 10)
+        echoes += Int(input[unsafe_offset=i] >= options.precip_thr)
     for i in range(2 * PIXELS):
         if not isfinite(velocity[unsafe_offset=i]):
             return 2
     if echoes < 16:
-        return steps_forecast_native(input, velocity, output, members, leads, seed, workers, velocity_float32)
+        return forecast_native[SIZE](input, velocity, output, members, leads, seed, workers, velocity_float32, options)
     try:
         initialize_runtime()
-        var model = Optional[Model]()
+        var model = Optional[Model[SIZE]]()
         var noise_filter = input
         var weights = input
         if not GPU_MODEL:
-            model = Optional[Model](Model(input, velocity, velocity_float32 != 0))
+            model = Optional[Model[SIZE]](Model[SIZE](input, velocity, velocity_float32 != 0))
             noise_filter = data(model.value().noise_filter)
             weights = data(model.value().weights)
             for i in range(LEVELS):
@@ -95,7 +101,7 @@ def forecast_resident[GPU_RNG: Bool, GPU_MODEL: Bool = False, GPU_SEED: Bool = F
             for i in range(3 * LEVELS):
                 if not isfinite(model.value().coefficients[i]):
                     return 2
-        var gpu = GpuNoise(noise_filter, weights, members, workers, not GPU_MODEL)
+        var gpu = GpuNoise[SIZE](noise_filter, weights, members, workers, not GPU_MODEL)
         var rngs = List[MT19937]()
         var params = List[Float32]()
         if not GPU_MODEL:
@@ -135,16 +141,16 @@ def forecast_resident[GPU_RNG: Bool, GPU_MODEL: Bool = False, GPU_SEED: Bool = F
         var params_gpu = gpu.context.enqueue_create_buffer[DType.float32](PARAM_EPS + 4 * members)
         if not GPU_MODEL or not GPU_SEED:
             params_gpu.enqueue_copy_from(params)
-        var gpu_model = Optional[GpuModel]()
+        var gpu_model = Optional[GpuModel[SIZE]]()
         if GPU_MODEL:
-            gpu_model = Optional[GpuModel](GpuModel(gpu, input, velocity, initial_gpu, params_gpu, velocity_float32))
+            gpu_model = Optional[GpuModel[SIZE]](GpuModel[SIZE](gpu, input, velocity, initial_gpu, params_gpu, velocity_float32))
             if not gpu_model.value().valid:
                 return 2
         var rng_state_gpu = gpu.context.enqueue_create_buffer[DType.uint32](members * 624)
         var motion_state_gpu = gpu.context.enqueue_create_buffer[DType.uint32](624)
         var rng_position_gpu = gpu.context.enqueue_create_buffer[DType.int32](members)
         if GPU_SEED:
-            gpu.context.enqueue_function[initialize_random](rng_state_gpu, motion_state_gpu, rng_position_gpu, params_gpu, seed, Int32(members), grid_dim=1, block_dim=1)
+            gpu.context.enqueue_function[initialize_random[SIZE]](rng_state_gpu, motion_state_gpu, rng_position_gpu, params_gpu, seed, Int32(members), grid_dim=1, block_dim=1)
         else:
             rng_state_gpu.enqueue_copy_from(rng_state)
             rng_position_gpu.enqueue_copy_from(rng_position)
@@ -163,15 +169,15 @@ def forecast_resident[GPU_RNG: Bool, GPU_MODEL: Bool = False, GPU_SEED: Bool = F
         var indices1 = gpu.context.enqueue_create_buffer[DType.int32](members * PIXELS)
         var readback = CachedResult(gpu.context, 2 * members * leads * PIXELS)
         var cached = readback.pointer
-        gpu.context.enqueue_function[initialize_members](initial_gpu, state, field, displacement, Int32(members), grid_dim=(members * 2 * LEVELS * PIXELS + 255) // 256, block_dim=256)
-        gpu.context.enqueue_function[mask_rows](field, distance, grid_dim=members * N // 64, block_dim=64)
-        gpu.context.enqueue_function[mask_columns](distance, mask, grid_dim=members * N // 64, block_dim=64)
+        gpu.context.enqueue_function[initialize_members[SIZE]](initial_gpu, state, field, displacement, Int32(members), grid_dim=(members * 2 * LEVELS * PIXELS + 255) // 256, block_dim=256)
+        gpu.context.enqueue_function[mask_rows[SIZE]](field, distance, Float32(options.precip_thr), Float32(options.precip_thr - Float64(Float32(options.precip_thr))), grid_dim=members * N // 64, block_dim=64)
+        gpu.context.enqueue_function[mask_columns[SIZE]](distance, mask, Int32(options.mask_radius()), grid_dim=members * N // 64, block_dim=64)
         var rp = rngs.unsafe_ptr().unsafe_origin_cast[MutUntrackedOrigin]()
         var host_input = gpu.host_input.unsafe_ptr().unsafe_origin_cast[MutUntrackedOrigin]()
         var total = members * PIXELS
         for lead in range(leads):
             if GPU_RNG:
-                gpu.context.enqueue_function[generate_normals](rng_state_gpu, rng_position_gpu, gpu.input, grid_dim=members, block_dim=256)
+                gpu.context.enqueue_function[generate_normals[SIZE]](rng_state_gpu, rng_position_gpu, gpu.input, grid_dim=members, block_dim=256)
             else:
                 # Synchronize before overwriting the previous upload's host storage.
                 gpu.context.synchronize()
@@ -186,33 +192,33 @@ def forecast_resident[GPU_RNG: Bool, GPU_MODEL: Bool = False, GPU_SEED: Bool = F
                         host_input[unsafe_offset=4 * i + 3] = 0
                 parallelize(white, members, min(workers, members))
                 gpu.input.enqueue_copy_from(gpu.host_input)
-            gpu.context.enqueue_function[fft_axis](gpu.input, gpu.noise_row, gpu.forward_twiddles, grid_dim=members * N, block_dim=192)
-            gpu.context.enqueue_function[fft_axis](gpu.noise_row, gpu.spectrum, gpu.forward_twiddles, grid_dim=members * N, block_dim=192)
-            gpu.context.enqueue_function[apply_filters](gpu.spectrum, gpu.filters, gpu.frequency, Int32(total * LEVELS), grid_dim=(total * LEVELS + 255) // 256, block_dim=256)
-            gpu.context.enqueue_function[fft_axis](gpu.frequency, gpu.cascade_row, gpu.inverse_twiddles, grid_dim=members * LEVELS * N, block_dim=192)
-            gpu.context.enqueue_function[fft_axis](gpu.cascade_row, gpu.cascades, gpu.inverse_twiddles, grid_dim=members * LEVELS * N, block_dim=192)
-            gpu.context.enqueue_function[normalize_cascades](gpu.cascades, gpu.normalized, grid_dim=members * LEVELS, block_dim=256)
-            gpu.context.enqueue_function[evolve](state, gpu.normalized, params_gpu, field, Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
-            gpu.context.enqueue_function[field_minimum](field, lows, grid_dim=members, block_dim=256)
-            gpu.context.enqueue_function[apply_mask](field, mask, lows, Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
-            gpu.context.enqueue_function[count_dry](field, lows, dry, grid_dim=members, block_dim=256)
-            gpu.context.enqueue_function[local_sort](field, keys0, indices0, grid_dim=total // 1024, block_dim=256)
+            gpu.context.enqueue_function[fft_axis[SIZE]](gpu.input, gpu.noise_row, gpu.forward_twiddles, grid_dim=members * N, block_dim=N)
+            gpu.context.enqueue_function[fft_axis[SIZE]](gpu.noise_row, gpu.spectrum, gpu.forward_twiddles, grid_dim=members * N, block_dim=N)
+            gpu.context.enqueue_function[apply_filters[SIZE]](gpu.spectrum, gpu.filters, gpu.frequency, Int32(total * LEVELS), grid_dim=(total * LEVELS + 255) // 256, block_dim=256)
+            gpu.context.enqueue_function[fft_axis[SIZE]](gpu.frequency, gpu.cascade_row, gpu.inverse_twiddles, grid_dim=members * LEVELS * N, block_dim=N)
+            gpu.context.enqueue_function[fft_axis[SIZE]](gpu.cascade_row, gpu.cascades, gpu.inverse_twiddles, grid_dim=members * LEVELS * N, block_dim=N)
+            gpu.context.enqueue_function[normalize_cascades[SIZE]](gpu.cascades, gpu.normalized, grid_dim=members * LEVELS, block_dim=256)
+            gpu.context.enqueue_function[evolve[SIZE]](state, gpu.normalized, params_gpu, field, Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
+            gpu.context.enqueue_function[field_minimum[SIZE]](field, lows, grid_dim=members, block_dim=256)
+            gpu.context.enqueue_function[apply_mask[SIZE]](field, mask, lows, Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
+            gpu.context.enqueue_function[count_dry[SIZE]](field, lows, dry, grid_dim=members, block_dim=256)
+            gpu.context.enqueue_function[local_sort[SIZE]](field, keys0, indices0, grid_dim=total // 1024, block_dim=256)
             # Six merge passes; even count leaves the result in keys0.
-            comptime for stage in range(6):
+            comptime for stage in range(MERGE_PASSES):
                 if stage % 2 == 0:
-                    gpu.context.enqueue_function[merge_sort](keys0, indices0, keys1, indices1, Int32(1024 << stage), Int32(total), grid_dim=(total + 255) // 256, block_dim=256)
+                    gpu.context.enqueue_function[merge_sort[SIZE]](keys0, indices0, keys1, indices1, Int32(1024 << stage), Int32(total), grid_dim=(total + 255) // 256, block_dim=256)
                 else:
-                    gpu.context.enqueue_function[merge_sort](keys1, indices1, keys0, indices0, Int32(1024 << stage), Int32(total), grid_dim=(total + 255) // 256, block_dim=256)
-            gpu.context.enqueue_function[cdf_match](keys0, indices0, lows, dry, params_gpu, matched, Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
-            gpu.context.enqueue_function[mask_rows](matched, distance, grid_dim=members * N // 64, block_dim=64)
-            gpu.context.enqueue_function[mask_columns](distance, mask, grid_dim=members * N // 64, block_dim=64)
-            var minutes = Float64((lead + 1) * 5)
+                    gpu.context.enqueue_function[merge_sort[SIZE]](keys1, indices1, keys0, indices0, Int32(1024 << stage), Int32(total), grid_dim=(total + 255) // 256, block_dim=256)
+            gpu.context.enqueue_function[cdf_match[SIZE]](keys0, indices0, lows, dry, params_gpu, matched, Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
+            gpu.context.enqueue_function[mask_rows[SIZE]](matched, distance, Float32(options.precip_thr), Float32(options.precip_thr - Float64(Float32(options.precip_thr))), grid_dim=members * N // 64, block_dim=64)
+            gpu.context.enqueue_function[mask_columns[SIZE]](distance, mask, Int32(options.mask_radius()), grid_dim=members * N // 64, block_dim=64)
+            var minutes = Float64(lead + 1) * options.timestep
             var along = 10.88 * pow(minutes, 0.23) - 7.68
             var across = 5.76 * pow(minutes, 0.31) - 2.72
             var ah = Float32(along)
             var ch = Float32(across)
-            gpu.context.enqueue_function[perturb](params_gpu, perturbed, ah, Float32(along - Float64(ah)), ch, Float32(across - Float64(ch)), Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
-            gpu.context.enqueue_function[advection](matched, perturbed, displacement, readback.buffer, Int32(lead), Int32(leads), Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
+            gpu.context.enqueue_function[perturb[SIZE]](params_gpu, perturbed, ah, Float32(along - Float64(ah)), ch, Float32(across - Float64(ch)), Int32(members), Float32(options.velocity_scale()), Float32(options.velocity_scale() - Float64(Float32(options.velocity_scale()))), grid_dim=(total + 255) // 256, block_dim=256)
+            gpu.context.enqueue_function[advection[SIZE]](matched, perturbed, displacement, readback.buffer, Int32(lead), Int32(leads), Int32(members), grid_dim=(total + 255) // 256, block_dim=256)
         gpu.context.synchronize()
         def unpack(m: Int) {imm}:
             for p in range(leads * PIXELS):
@@ -236,27 +242,27 @@ def forecast_resident[GPU_RNG: Bool, GPU_MODEL: Bool = False, GPU_SEED: Bool = F
 
 @export
 def steps_forecast_gpu_resident(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32) abi("C") -> Int32:
-    return forecast_resident[False](input, velocity, output, members, leads, seed, workers, velocity_float32)
+    return forecast_resident[192, False](input, velocity, output, members, leads, seed, workers, velocity_float32)
 
 
 @export
 def steps_forecast_gpu_rng(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32) abi("C") -> Int32:
-    return forecast_resident[True](input, velocity, output, members, leads, seed, workers, velocity_float32)
+    return forecast_resident[192, True](input, velocity, output, members, leads, seed, workers, velocity_float32)
 
 
 @export
 def steps_forecast_gpu_all(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32) abi("C") -> Int32:
-    return forecast_resident[True, True, True](input, velocity, output, members, leads, seed, workers, velocity_float32)
+    return forecast_resident[192, True, True, True](input, velocity, output, members, leads, seed, workers, velocity_float32)
 
 
 @export
 def steps_all_model_probe(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, velocity_float32: Int32) abi("C"):
     try:
         initialize_runtime()
-        var gpu = GpuNoise(input, input, 1, 1, False)
+        var gpu = GpuNoise[192](input, input, 1, 1, False)
         var initial = gpu.context.enqueue_create_buffer[DType.float32](2 * (2 * LEVELS + 1) * PIXELS)
         var params = gpu.context.enqueue_create_buffer[DType.float32](PARAM_EPS)
-        var model = GpuModel(gpu, input, velocity, initial, params, velocity_float32)
+        var model = GpuModel[192](gpu, input, velocity, initial, params, velocity_float32)
         with params.map_to_host() as host:
             for i in range(30):
                 output[unsafe_offset=i] = Float64(host[2*i]) + Float64(host[2*i+1])
@@ -276,7 +282,7 @@ def steps_all_model_probe(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, veloc
 
 @export
 def steps_forecast_gpu_model(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32) abi("C") -> Int32:
-    return forecast_resident[True, True, False](input, velocity, output, members, leads, seed, workers, velocity_float32)
+    return forecast_resident[192, True, True, False](input, velocity, output, members, leads, seed, workers, velocity_float32)
 
 
 @export
@@ -288,7 +294,7 @@ def steps_gpu_seed_probe(seed: UInt32, members: Int, output: F64Ptr) abi("C"):
         var motion = ctx.enqueue_create_buffer[DType.uint32](624)
         var positions = ctx.enqueue_create_buffer[DType.int32](members)
         var params = ctx.enqueue_create_buffer[DType.float32](PARAM_EPS + 4 * members)
-        ctx.enqueue_function[initialize_random](states, motion, positions, params, seed, Int32(members), grid_dim=1, block_dim=1)
+        ctx.enqueue_function[initialize_random[192]](states, motion, positions, params, seed, Int32(members), grid_dim=1, block_dim=1)
         with positions.map_to_host() as host:
             for m in range(members):
                 output[unsafe_offset=m*627] = Float64(host[m])
@@ -309,23 +315,23 @@ def steps_gpu_seed_probe(seed: UInt32, members: Int, output: F64Ptr) abi("C"):
 def steps_gpu_initial_probe(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, v32: Int32, backend: Int32) abi("C"):
     from native_fields import align
     if backend == 0:
-        var model = Model(input, velocity, v32 != 0)
+        var model = Model[192](input, velocity, v32 != 0)
         for i in range(2 * LEVELS * PIXELS):
             output[unsafe_offset=i] = model.initial[i]
         for i in range(2 * PIXELS):
             output[unsafe_offset=2 * LEVELS * PIXELS+i] = model.direction[i]
-        align(input, velocity, 2, output + (2*LEVELS+2)*PIXELS, v32 != 0)
-        align(input + PIXELS, velocity, 1, output + (2*LEVELS+3)*PIXELS, v32 != 0)
+        align[192](input, velocity, 2, output + (2*LEVELS+2)*PIXELS, v32 != 0)
+        align[192](input + PIXELS, velocity, 1, output + (2*LEVELS+3)*PIXELS, v32 != 0)
         for i in range(PIXELS):
             output[unsafe_offset=(2*LEVELS+4)*PIXELS+i] = input[unsafe_offset=2*PIXELS+i]
         _ = model
     else:
         try:
             initialize_runtime()
-            var gpu = GpuNoise(input, input, 1, 1, False)
+            var gpu = GpuNoise[192](input, input, 1, 1, False)
             var initial = gpu.context.enqueue_create_buffer[DType.float32](2 * (2 * LEVELS + 1) * PIXELS)
             var params = gpu.context.enqueue_create_buffer[DType.float32](PARAM_EPS)
-            var model = GpuModel(gpu, input, velocity, initial, params, v32)
+            var model = GpuModel[192](gpu, input, velocity, initial, params, v32)
             with initial.map_to_host() as host:
                 for i in range(2 * LEVELS * PIXELS):
                     output[unsafe_offset=i] = Float64(host[2*i]) + Float64(host[2*i+1])
@@ -364,17 +370,17 @@ def steps_gpu_fields_probe(input: F64Ptr, target: F64Ptr, output: F64Ptr) abi("C
         var matched = ctx.enqueue_create_buffer[DType.float32](2*PIXELS)
         var distance = ctx.enqueue_create_buffer[DType.int32](PIXELS)
         var mask = ctx.enqueue_create_buffer[DType.float32](2*PIXELS)
-        ctx.enqueue_function[field_minimum](field, lows, grid_dim=1, block_dim=256)
-        ctx.enqueue_function[count_dry](field, lows, dry, grid_dim=1, block_dim=256)
-        ctx.enqueue_function[local_sort](field, k0, i0, grid_dim=PIXELS//1024, block_dim=256)
-        comptime for stage in range(6):
+        ctx.enqueue_function[field_minimum[192]](field, lows, grid_dim=1, block_dim=256)
+        ctx.enqueue_function[count_dry[192]](field, lows, dry, grid_dim=1, block_dim=256)
+        ctx.enqueue_function[local_sort[192]](field, k0, i0, grid_dim=PIXELS//1024, block_dim=256)
+        comptime for stage in range(MERGE_PASSES):
             if stage % 2 == 0:
-                ctx.enqueue_function[merge_sort](k0, i0, k1, i1, Int32(1024 << stage), Int32(PIXELS), grid_dim=PIXELS//256, block_dim=256)
+                ctx.enqueue_function[merge_sort[192]](k0, i0, k1, i1, Int32(1024 << stage), Int32(PIXELS), grid_dim=PIXELS//256, block_dim=256)
             else:
-                ctx.enqueue_function[merge_sort](k1, i1, k0, i0, Int32(1024 << stage), Int32(PIXELS), grid_dim=PIXELS//256, block_dim=256)
-        ctx.enqueue_function[cdf_match](k0, i0, lows, dry, params, matched, Int32(1), grid_dim=PIXELS//256, block_dim=256)
-        ctx.enqueue_function[mask_rows](field, distance, grid_dim=N//64, block_dim=64)
-        ctx.enqueue_function[mask_columns](distance, mask, grid_dim=N//64, block_dim=64)
+                ctx.enqueue_function[merge_sort[192]](k1, i1, k0, i0, Int32(1024 << stage), Int32(PIXELS), grid_dim=PIXELS//256, block_dim=256)
+        ctx.enqueue_function[cdf_match[192]](k0, i0, lows, dry, params, matched, Int32(1), grid_dim=PIXELS//256, block_dim=256)
+        ctx.enqueue_function[mask_rows[192]](field, distance, Float32(10), Float32(0), grid_dim=N//64, block_dim=64)
+        ctx.enqueue_function[mask_columns[192]](distance, mask, Int32(4), grid_dim=N//64, block_dim=64)
         with matched.map_to_host() as host:
             for i in range(PIXELS):
                 output[unsafe_offset=i] = Float64(host[2*i]) + Float64(host[2*i+1])
@@ -387,3 +393,22 @@ def steps_gpu_fields_probe(input: F64Ptr, target: F64Ptr, output: F64Ptr) abi("C
     except error:
         print("field probe:", error)
         return 3
+
+
+@export
+def steps_forecast_gpu_v2(input: F64Ptr, velocity: F64Ptr, output: F64Ptr, size: Int, members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32, kmperpixel: Float64, timestep: Float64, precip_thr: Float64, norain_thr: Float64) abi("C") -> Int32:
+    var options = RuntimeOptions(kmperpixel, timestep, precip_thr, norain_thr)
+    if not options.valid():
+        return 1
+    if size == 64:
+        return forecast_resident[64, True, True, True](input, velocity, output, members, leads, seed, workers, velocity_float32, options)
+    if size == 128:
+        return forecast_resident[128, True, True, True](input, velocity, output, members, leads, seed, workers, velocity_float32, options)
+    if size == 192:
+        return forecast_resident[192, True, True, True](input, velocity, output, members, leads, seed, workers, velocity_float32, options)
+    # Large-grid CDF ranks need the reference-compatible float64 CPU fit.
+    if size == 256:
+        return forecast_resident[256, True, False, True](input, velocity, output, members, leads, seed, workers, velocity_float32, options)
+    if size == 512:
+        return forecast_resident[512, True, False, True](input, velocity, output, members, leads, seed, workers, velocity_float32, options)
+    return 1

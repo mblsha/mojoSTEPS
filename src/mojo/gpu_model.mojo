@@ -6,6 +6,8 @@
 Metal generates the Gaussian/taper tables and fits the input history. The
 host supplies seven fixed scalar band constants and marshals input arrays.
 """
+from native_config import RuntimeOptions, merge_passes
+from native_config import MERGE_PASSES
 from std.math import pow, log, exp, sqrt, cos, isfinite
 from std.memory import unsafe_stack_allocation, bitcast
 from max.gpu import global_idx, block_idx, thread_idx
@@ -49,7 +51,9 @@ def dd_cos(x: D2) -> D2:
     return total
 
 
-def fixed_tables(constants: FPtr, weights: FPtr, taper: FPtr):
+def fixed_tables[SIZE: Int = 192](constants: FPtr, weights: FPtr, taper: FPtr):
+    comptime N = SIZE
+    comptime PIXELS = SIZE * SIZE
     var p = global_idx.x
     if p >= PIXELS:
         return
@@ -74,8 +78,8 @@ def fixed_tables(constants: FPtr, weights: FPtr, taper: FPtr):
         if radius[0] == 0:
             w = D2(Float32(Int(level == 0)), 0)
         put(weights, level*PIXELS+p, w)
-    var tx = dd_add(dd_div(D2(Float32(x), 0), D2(N, 0)), D2(-.5, 0))
-    var ty = dd_add(dd_div(D2(Float32(y), 0), D2(N, 0)), D2(-.5, 0))
+    var tx = dd_add(dd_div(D2(Float32(x), 0), D2(Float32(N), 0)), D2(-.5, 0))
+    var ty = dd_add(dd_div(D2(Float32(y), 0), D2(Float32(N), 0)), D2(-.5, 0))
     radius = dd_sqrt(dd_add(dd_mul(tx, tx), dd_mul(ty, ty)))
     var value = D2(1, 0)
     if radius[0] >= .5:
@@ -89,7 +93,11 @@ def fixed_tables(constants: FPtr, weights: FPtr, taper: FPtr):
     put(taper, p, value)
 
 
-def align_history(source: FPtr, aligned: FPtr, params: FPtr, v32: Int32):
+def align_history[SIZE: Int = 192](source: FPtr, aligned: FPtr, params: FPtr, v32: Int32):
+    comptime N = SIZE
+    comptime PIXELS = SIZE * SIZE
+    comptime PARAM_DIRECTION = 60 + 2 * PIXELS
+    comptime PARAM_VELOCITY = 60 + 6 * PIXELS
     var i = global_idx.x
     if i >= 3 * PIXELS:
         return
@@ -106,23 +114,23 @@ def align_history(source: FPtr, aligned: FPtr, params: FPtr, v32: Int32):
     for step in range(2 - frame):
         var hx = dd_add(x, dd_add(dx, -dd_mul(vx, D2(.5, 0))))
         var hy = dd_add(y, dd_add(dy, -dd_mul(vy, D2(.5, 0))))
-        vx = sample(velocity, 0, hx, hy, True)
-        vy = sample(velocity, PIXELS, hx, hy, True)
+        vx = sample[SIZE](velocity, 0, hx, hy, True)
+        vy = sample[SIZE](velocity, PIXELS, hx, hy, True)
         if v32 != 0:
             vx = D2(vx[0] + vx[1], 0)
             vy = D2(vy[0] + vy[1], 0)
         dx = dd_add(dx, -vx)
         dy = dd_add(dy, -vy)
-        vx = sample(velocity, 0, dd_add(x, dx), dd_add(y, dy), True)
-        vy = sample(velocity, PIXELS, dd_add(x, dx), dd_add(y, dy), True)
+        vx = sample[SIZE](velocity, 0, dd_add(x, dx), dd_add(y, dy), True)
+        vy = sample[SIZE](velocity, PIXELS, dd_add(x, dx), dd_add(y, dy), True)
         if v32 != 0:
             vx = D2(vx[0] + vx[1], 0)
             vy = D2(vy[0] + vy[1], 0)
     var xx = dd_add(x, dx)
     var yy = dd_add(y, dy)
     var value = low
-    if not (less(xx, D2(0)) or less(yy, D2(0)) or less(D2(N - 1, 0), xx) or less(D2(N - 1, 0), yy)):
-        value = sample(source, frame * PIXELS, xx, yy, False, v32 != 0)
+    if not (less(xx, D2(0)) or less(yy, D2(0)) or less(D2(Float32(N - 1), 0), xx) or less(D2(Float32(N - 1), 0), yy)):
+        value = sample[SIZE](source, frame * PIXELS, xx, yy, False, v32 != 0)
     put(aligned, i, value)
     if frame == 0:
         var original_x = get(velocity, p)
@@ -144,7 +152,8 @@ def align_history(source: FPtr, aligned: FPtr, params: FPtr, v32: Int32):
         put(params + PARAM_DIRECTION, PIXELS + p, uy)
 
 
-def input_lows(source: FPtr, params: FPtr):
+def input_lows[SIZE: Int = 192](source: FPtr, params: FPtr):
+    comptime PIXELS = SIZE * SIZE
     var frame = block_idx.x
     var t = thread_idx.x
     var low = D2(3.4e38, 0)
@@ -162,7 +171,8 @@ def input_lows(source: FPtr, params: FPtr):
         put(params, 30 + frame, shared[0])
 
 
-def remove_discontinuity(source: FPtr, lows: FPtr, output: FPtr):
+def remove_discontinuity[SIZE: Int = 192](source: FPtr, lows: FPtr, output: FPtr):
+    comptime PIXELS = SIZE * SIZE
     var t = thread_idx.x
     var low = lesser(lesser(get(lows, 0), get(lows, 1)), get(lows, 2))
     var first = D2(3.4e38, 0)
@@ -186,7 +196,8 @@ def remove_discontinuity(source: FPtr, lows: FPtr, output: FPtr):
         put(output, i, value)
 
 
-def prepare_fft(source: FPtr, output: FPtr, lows: FPtr, taper: FPtr, use_taper: Int32):
+def prepare_fft[SIZE: Int = 192](source: FPtr, output: FPtr, lows: FPtr, taper: FPtr, use_taper: Int32):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= 3 * PIXELS:
         return
@@ -199,7 +210,8 @@ def prepare_fft(source: FPtr, output: FPtr, lows: FPtr, taper: FPtr, use_taper: 
     output[4*i+3] = 0
 
 
-def model_filters(spectrum: FPtr, weights: FPtr, filters: FPtr):
+def model_filters[SIZE: Int = 192](spectrum: FPtr, weights: FPtr, filters: FPtr):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= PIXELS:
         return
@@ -216,7 +228,8 @@ def model_filters(spectrum: FPtr, weights: FPtr, filters: FPtr):
         put(filters, level * PIXELS + i, dd_mul(magnitude, get(weights, level * PIXELS + i)))
 
 
-def model_bands(spectrum: FPtr, weights: FPtr, output: FPtr):
+def model_bands[SIZE: Int = 192](spectrum: FPtr, weights: FPtr, output: FPtr):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= 3 * LEVELS * PIXELS:
         return
@@ -233,8 +246,9 @@ def model_bands(spectrum: FPtr, weights: FPtr, output: FPtr):
     output[4*i+3] = im[1]
 
 
-def normalize_model(source: FPtr, output: FPtr, params: FPtr):
-    comptime inv = Float64(1) / PIXELS
+def normalize_model[SIZE: Int = 192](source: FPtr, output: FPtr, params: FPtr):
+    comptime PIXELS = SIZE * SIZE
+    comptime inv = Float64(1) / Float64(PIXELS)
     comptime inverse = D2(Float32(inv), Float32(inv - Float64(Float32(inv))))
     var f = block_idx.x
     var t = thread_idx.x
@@ -267,7 +281,8 @@ def normalize_model(source: FPtr, output: FPtr, params: FPtr):
         put(output, f * PIXELS + i, dd_div(dd_add(source.load[width=2](4 * (f * PIXELS + i)), -mean), deviation))
 
 
-def fit_ar(cascades: FPtr, params: FPtr):
+def fit_ar[SIZE: Int = 192](cascades: FPtr, params: FPtr):
+    comptime PIXELS = SIZE * SIZE
     var level = block_idx.x
     var t = thread_idx.x
     # Normalized cascades have zero mean. Their residual paired-float means
@@ -329,7 +344,9 @@ def fit_ar(cascades: FPtr, params: FPtr):
         put(params, 12 + 3 * level + 2, dd_sqrt(residual))
 
 
-def finish_model(cascades: FPtr, sorted_target: FPtr, initial: FPtr, params: FPtr, source: FPtr):
+def finish_model[SIZE: Int = 192](cascades: FPtr, sorted_target: FPtr, initial: FPtr, params: FPtr, source: FPtr):
+    comptime PIXELS = SIZE * SIZE
+    comptime PARAM_TARGET = 60
     var i = global_idx.x
     if i < 2 * LEVELS * PIXELS:
         put(initial, i, get(cascades, LEVELS * PIXELS + i))
@@ -338,7 +355,8 @@ def finish_model(cascades: FPtr, sorted_target: FPtr, initial: FPtr, params: FPt
         put(params + PARAM_TARGET, i, get(sorted_target, i))
 
 
-def copy_latest(source: FPtr, latest: FPtr):
+def copy_latest[SIZE: Int = 192](source: FPtr, latest: FPtr):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i < PIXELS:
         put(latest, i, get(source, 2 * PIXELS + i))
@@ -360,7 +378,10 @@ def append_pair(mut values: List[Float32], v: Float64):
     values.append(Float32(v - Float64(hi)))
 
 
-struct GpuModel(Movable):
+struct GpuModel[SIZE: Int = 192](Movable):
+    comptime N = Self.SIZE
+    comptime PIXELS = Self.SIZE * Self.SIZE
+    comptime MERGE_PASSES = merge_passes(Self.PIXELS)
     var constants: DeviceBuffer[DType.float32]
     var valid: Bool
     var latest: DeviceBuffer[DType.float32]
@@ -382,66 +403,66 @@ struct GpuModel(Movable):
     var indices0: DeviceBuffer[DType.int32]
     var indices1: DeviceBuffer[DType.int32]
 
-    def __init__(out self, mut gpu: GpuNoise, input: F64Ptr, velocity: F64Ptr, initial: DeviceBuffer[DType.float32], params: DeviceBuffer[DType.float32], v32: Int32) raises:
+    def __init__(out self, mut gpu: GpuNoise[Self.SIZE], input: F64Ptr, velocity: F64Ptr, initial: DeviceBuffer[DType.float32], params: DeviceBuffer[DType.float32], v32: Int32) raises:
         var host_source = List[Float32]()
-        for i in range(3 * PIXELS):
+        for i in range(3 * Self.PIXELS):
             append_pair(host_source, input[unsafe_offset=i])
-        for i in range(2 * PIXELS):
+        for i in range(2 * Self.PIXELS):
             append_pair(host_source, velocity[unsafe_offset=i])
         var host_constants = List[Float32]()
-        var q = pow(Float64(N) / 2, 1.0 / LEVELS)
+        var q = pow(Float64(Self.N) / 2, 1.0 / LEVELS)
         for level in range(LEVELS):
             append_pair(host_constants, log((pow(q, Float64(level)) + pow(q, Float64(level+1))) / 2) / log(q))
         append_pair(host_constants, 1.0 / log(q))
         self.valid = False
-        self.latest = gpu.context.enqueue_create_buffer[DType.float32](2 * PIXELS)
-        self.source = gpu.context.enqueue_create_buffer[DType.float32](10 * PIXELS)
-        self.weights = gpu.context.enqueue_create_buffer[DType.float32](2 * LEVELS * PIXELS)
-        self.taper = gpu.context.enqueue_create_buffer[DType.float32](2 * PIXELS)
+        self.latest = gpu.context.enqueue_create_buffer[DType.float32](2 * Self.PIXELS)
+        self.source = gpu.context.enqueue_create_buffer[DType.float32](10 * Self.PIXELS)
+        self.weights = gpu.context.enqueue_create_buffer[DType.float32](2 * LEVELS * Self.PIXELS)
+        self.taper = gpu.context.enqueue_create_buffer[DType.float32](2 * Self.PIXELS)
         self.source.enqueue_copy_from(host_source)
         self.constants = gpu.context.enqueue_create_buffer[DType.float32](14)
         self.constants.enqueue_copy_from(host_constants)
-        gpu.context.enqueue_function[fixed_tables](self.constants, self.weights, self.taper, grid_dim=PIXELS//256, block_dim=256)
-        self.aligned = gpu.context.enqueue_create_buffer[DType.float32](6 * PIXELS)
-        self.prepared = gpu.context.enqueue_create_buffer[DType.float32](6 * PIXELS)
+        gpu.context.enqueue_function[fixed_tables[Self.SIZE]](self.constants, self.weights, self.taper, grid_dim=Self.PIXELS//256, block_dim=256)
+        self.aligned = gpu.context.enqueue_create_buffer[DType.float32](6 * Self.PIXELS)
+        self.prepared = gpu.context.enqueue_create_buffer[DType.float32](6 * Self.PIXELS)
         self.lows = gpu.context.enqueue_create_buffer[DType.float32](6)
-        self.fft_input = gpu.context.enqueue_create_buffer[DType.float32](12 * PIXELS)
-        self.row = gpu.context.enqueue_create_buffer[DType.float32](12 * PIXELS)
-        self.spectrum = gpu.context.enqueue_create_buffer[DType.float32](12 * PIXELS)
-        self.bands = gpu.context.enqueue_create_buffer[DType.float32](12 * LEVELS * PIXELS)
-        self.band_row = gpu.context.enqueue_create_buffer[DType.float32](12 * LEVELS * PIXELS)
-        self.band_result = gpu.context.enqueue_create_buffer[DType.float32](12 * LEVELS * PIXELS)
-        self.normalized = gpu.context.enqueue_create_buffer[DType.float32](6 * LEVELS * PIXELS)
-        self.keys0 = gpu.context.enqueue_create_buffer[DType.float32](2 * PIXELS)
-        self.keys1 = gpu.context.enqueue_create_buffer[DType.float32](2 * PIXELS)
-        self.indices0 = gpu.context.enqueue_create_buffer[DType.int32](PIXELS)
-        self.indices1 = gpu.context.enqueue_create_buffer[DType.int32](PIXELS)
-        gpu.context.enqueue_function[input_lows](self.source, params, grid_dim=3, block_dim=256)
-        gpu.context.enqueue_function[align_history](self.source, self.aligned, params, v32, grid_dim=3*PIXELS//256, block_dim=256)
-        gpu.context.enqueue_function[field_minimum](self.aligned, self.lows, grid_dim=3, block_dim=256)
-        gpu.context.enqueue_function[remove_discontinuity](self.aligned, self.lows, self.prepared, grid_dim=1, block_dim=256)
-        gpu.context.enqueue_function[field_minimum](self.prepared, self.lows, grid_dim=3, block_dim=256)
-        gpu.context.enqueue_function[prepare_fft](self.prepared, self.fft_input, self.lows, self.taper, Int32(1), grid_dim=3*PIXELS//256, block_dim=256)
-        gpu.context.enqueue_function[fft_axis](self.fft_input, self.row, gpu.forward_twiddles, grid_dim=3*N, block_dim=192)
-        gpu.context.enqueue_function[fft_axis](self.row, self.spectrum, gpu.forward_twiddles, grid_dim=3*N, block_dim=192)
-        gpu.context.enqueue_function[model_filters](self.spectrum, self.weights, gpu.filters, grid_dim=PIXELS//256, block_dim=256)
-        gpu.context.enqueue_function[prepare_fft](self.aligned, self.fft_input, self.lows, self.taper, Int32(0), grid_dim=3*PIXELS//256, block_dim=256)
-        gpu.context.enqueue_function[fft_axis](self.fft_input, self.row, gpu.forward_twiddles, grid_dim=3*N, block_dim=192)
-        gpu.context.enqueue_function[fft_axis](self.row, self.spectrum, gpu.forward_twiddles, grid_dim=3*N, block_dim=192)
-        gpu.context.enqueue_function[model_bands](self.spectrum, self.weights, self.bands, grid_dim=3*LEVELS*PIXELS//256, block_dim=256)
-        gpu.context.enqueue_function[fft_axis](self.bands, self.band_row, gpu.inverse_twiddles, grid_dim=3*LEVELS*N, block_dim=192)
-        gpu.context.enqueue_function[fft_axis](self.band_row, self.band_result, gpu.inverse_twiddles, grid_dim=3*LEVELS*N, block_dim=192)
-        gpu.context.enqueue_function[normalize_model](self.band_result, self.normalized, params, grid_dim=3*LEVELS, block_dim=256)
-        gpu.context.enqueue_function[fit_ar](self.normalized, params, grid_dim=LEVELS, block_dim=256)
+        self.fft_input = gpu.context.enqueue_create_buffer[DType.float32](12 * Self.PIXELS)
+        self.row = gpu.context.enqueue_create_buffer[DType.float32](12 * Self.PIXELS)
+        self.spectrum = gpu.context.enqueue_create_buffer[DType.float32](12 * Self.PIXELS)
+        self.bands = gpu.context.enqueue_create_buffer[DType.float32](12 * LEVELS * Self.PIXELS)
+        self.band_row = gpu.context.enqueue_create_buffer[DType.float32](12 * LEVELS * Self.PIXELS)
+        self.band_result = gpu.context.enqueue_create_buffer[DType.float32](12 * LEVELS * Self.PIXELS)
+        self.normalized = gpu.context.enqueue_create_buffer[DType.float32](6 * LEVELS * Self.PIXELS)
+        self.keys0 = gpu.context.enqueue_create_buffer[DType.float32](2 * Self.PIXELS)
+        self.keys1 = gpu.context.enqueue_create_buffer[DType.float32](2 * Self.PIXELS)
+        self.indices0 = gpu.context.enqueue_create_buffer[DType.int32](Self.PIXELS)
+        self.indices1 = gpu.context.enqueue_create_buffer[DType.int32](Self.PIXELS)
+        gpu.context.enqueue_function[input_lows[Self.SIZE]](self.source, params, grid_dim=3, block_dim=256)
+        gpu.context.enqueue_function[align_history[Self.SIZE]](self.source, self.aligned, params, v32, grid_dim=3*Self.PIXELS//256, block_dim=256)
+        gpu.context.enqueue_function[field_minimum[Self.SIZE]](self.aligned, self.lows, grid_dim=3, block_dim=256)
+        gpu.context.enqueue_function[remove_discontinuity[Self.SIZE]](self.aligned, self.lows, self.prepared, grid_dim=1, block_dim=256)
+        gpu.context.enqueue_function[field_minimum[Self.SIZE]](self.prepared, self.lows, grid_dim=3, block_dim=256)
+        gpu.context.enqueue_function[prepare_fft[Self.SIZE]](self.prepared, self.fft_input, self.lows, self.taper, Int32(1), grid_dim=3*Self.PIXELS//256, block_dim=256)
+        gpu.context.enqueue_function[fft_axis[Self.SIZE]](self.fft_input, self.row, gpu.forward_twiddles, grid_dim=3*Self.N, block_dim=Self.N)
+        gpu.context.enqueue_function[fft_axis[Self.SIZE]](self.row, self.spectrum, gpu.forward_twiddles, grid_dim=3*Self.N, block_dim=Self.N)
+        gpu.context.enqueue_function[model_filters[Self.SIZE]](self.spectrum, self.weights, gpu.filters, grid_dim=Self.PIXELS//256, block_dim=256)
+        gpu.context.enqueue_function[prepare_fft[Self.SIZE]](self.aligned, self.fft_input, self.lows, self.taper, Int32(0), grid_dim=3*Self.PIXELS//256, block_dim=256)
+        gpu.context.enqueue_function[fft_axis[Self.SIZE]](self.fft_input, self.row, gpu.forward_twiddles, grid_dim=3*Self.N, block_dim=Self.N)
+        gpu.context.enqueue_function[fft_axis[Self.SIZE]](self.row, self.spectrum, gpu.forward_twiddles, grid_dim=3*Self.N, block_dim=Self.N)
+        gpu.context.enqueue_function[model_bands[Self.SIZE]](self.spectrum, self.weights, self.bands, grid_dim=3*LEVELS*Self.PIXELS//256, block_dim=256)
+        gpu.context.enqueue_function[fft_axis[Self.SIZE]](self.bands, self.band_row, gpu.inverse_twiddles, grid_dim=3*LEVELS*Self.N, block_dim=Self.N)
+        gpu.context.enqueue_function[fft_axis[Self.SIZE]](self.band_row, self.band_result, gpu.inverse_twiddles, grid_dim=3*LEVELS*Self.N, block_dim=Self.N)
+        gpu.context.enqueue_function[normalize_model[Self.SIZE]](self.band_result, self.normalized, params, grid_dim=3*LEVELS, block_dim=256)
+        gpu.context.enqueue_function[fit_ar[Self.SIZE]](self.normalized, params, grid_dim=LEVELS, block_dim=256)
         # Use a separate view of the latest source frame without any readback.
-        gpu.context.enqueue_function[copy_latest](self.source, self.latest, grid_dim=PIXELS//256, block_dim=256)
-        gpu.context.enqueue_function[local_sort](self.latest, self.keys0, self.indices0, grid_dim=PIXELS//1024, block_dim=256)
-        comptime for stage in range(6):
+        gpu.context.enqueue_function[copy_latest[Self.SIZE]](self.source, self.latest, grid_dim=Self.PIXELS//256, block_dim=256)
+        gpu.context.enqueue_function[local_sort[Self.SIZE]](self.latest, self.keys0, self.indices0, grid_dim=Self.PIXELS//1024, block_dim=256)
+        comptime for stage in range(Self.MERGE_PASSES):
             if stage % 2 == 0:
-                gpu.context.enqueue_function[merge_sort](self.keys0, self.indices0, self.keys1, self.indices1, Int32(1024 << stage), Int32(PIXELS), grid_dim=PIXELS//256, block_dim=256)
+                gpu.context.enqueue_function[merge_sort[Self.SIZE]](self.keys0, self.indices0, self.keys1, self.indices1, Int32(1024 << stage), Int32(Self.PIXELS), grid_dim=Self.PIXELS//256, block_dim=256)
             else:
-                gpu.context.enqueue_function[merge_sort](self.keys1, self.indices1, self.keys0, self.indices0, Int32(1024 << stage), Int32(PIXELS), grid_dim=PIXELS//256, block_dim=256)
-        gpu.context.enqueue_function[finish_model](self.normalized, self.keys0, initial, params, self.source, grid_dim=2*LEVELS*PIXELS//256, block_dim=256)
+                gpu.context.enqueue_function[merge_sort[Self.SIZE]](self.keys1, self.indices1, self.keys0, self.indices0, Int32(1024 << stage), Int32(Self.PIXELS), grid_dim=Self.PIXELS//256, block_dim=256)
+        gpu.context.enqueue_function[finish_model[Self.SIZE]](self.normalized, self.keys0, initial, params, self.source, grid_dim=2*LEVELS*Self.PIXELS//256, block_dim=256)
         var status = gpu.context.enqueue_create_buffer[DType.int32](1)
         gpu.context.enqueue_function[validate_model](params, status, grid_dim=1, block_dim=1)
         with status.map_to_host() as host_status:

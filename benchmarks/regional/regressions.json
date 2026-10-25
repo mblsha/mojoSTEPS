@@ -1,0 +1,64 @@
+{
+  "status": "fixed",
+  "fixture": "rain_cells(size=512)",
+  "seed": 20260817,
+  "members": 96,
+  "leads": 14,
+  "configuration": {
+    "kmperpixel": 0.5,
+    "timestep": 5,
+    "precip_thr": 10,
+    "norain_thr": -10
+  },
+  "initial_cpu_failures": [
+    {
+      "member": 27,
+      "lead": 9,
+      "y": 181,
+      "x": 245,
+      "native": 20.430708521832045,
+      "reference": 20.430216342427105,
+      "max_error": 0.000492179404940174,
+      "count": 7
+    },
+    {
+      "member": 39,
+      "lead": 7,
+      "y": 293,
+      "x": 354,
+      "native": 16.12885491580082,
+      "reference": 16.128879557247895,
+      "max_error": 2.4641447076589884e-05,
+      "count": 2
+    },
+    {
+      "member": 45,
+      "lead": 3,
+      "y": 149,
+      "x": 244,
+      "native": 12.682358179557156,
+      "reference": 12.682947521941104,
+      "max_error": 0.0005893423839484768,
+      "count": 7
+    },
+    {
+      "member": 57,
+      "lead": 2,
+      "y": 146,
+      "x": 318,
+      "native": 15.223113723586698,
+      "reference": 15.224994159944112,
+      "max_error": 0.0018804363574140837,
+      "count": 8
+    }
+  ],
+  "focused_member_seeds": [
+    633713063,
+    83773847,
+    300923882,
+    359157101
+  ],
+  "initial_gpu_failure_seed": 83773847,
+  "fix": "Pairwise large-grid CPU correlation and native float64 model fitting for large-grid GPU evolution",
+  "regression_test": "tests/test_runtime.py::test_large_grid_correlation_rank_regression"
+}

@@ -2,6 +2,8 @@
 # Copyright (c) 2026 Michael Pishchagin and mojoSTEPS contributors.
 # Adapted algorithm notices: see NOTICE and third_party/.
 """Paired-float GPU member evolution, sorting, masks and interpolation."""
+from native_config import RuntimeOptions, merge_passes
+from native_config import PRECIP_THR, MASK_RADIUS, VELOCITY_SCALE
 from std.math import floor, nan
 from std.memory import unsafe_stack_allocation
 from max.gpu import global_idx, block_idx, thread_idx
@@ -55,19 +57,20 @@ def dd_floor(a: D2) -> Int:
     return base
 
 @inline(.always)
-def sample(p: FPtr, offset: Int, x0: D2, y0: D2, nearest: Bool, affine: Bool = False) -> D2:
+def sample[SIZE: Int = 192](p: FPtr, offset: Int, x0: D2, y0: D2, nearest: Bool, affine: Bool = False) -> D2:
+    comptime N = SIZE
     var x = x0
     var y = y0
     if nearest:
         if less(x, D2(0)):
             x = D2(0)
-        if less(D2(N - 1, 0), x):
-            x = D2(N - 1, 0)
+        if less(D2(Float32(N - 1), 0), x):
+            x = D2(Float32(N - 1), 0)
         if less(y, D2(0)):
             y = D2(0)
-        if less(D2(N - 1, 0), y):
-            y = D2(N - 1, 0)
-    elif less(x, D2(0)) or less(y, D2(0)) or less(D2(N - 1, 0), x) or less(D2(N - 1, 0), y):
+        if less(D2(Float32(N - 1), 0), y):
+            y = D2(Float32(N - 1), 0)
+    elif less(x, D2(0)) or less(y, D2(0)) or less(D2(Float32(N - 1), 0), x) or less(D2(Float32(N - 1), 0), y):
         return D2(nan[DType.float32](), 0)
     var ix = dd_floor(x)
     var iy = dd_floor(y)
@@ -92,7 +95,8 @@ def sample(p: FPtr, offset: Int, x0: D2, y0: D2, nearest: Bool, affine: Bool = F
     return v
 
 
-def initialize_members(initial: FPtr, state: FPtr, field: FPtr, displacement: FPtr, count: Int32):
+def initialize_members[SIZE: Int = 192](initial: FPtr, state: FPtr, field: FPtr, displacement: FPtr, count: Int32):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i < Int(count) * 2 * LEVELS * PIXELS:
         put(state, i, get(initial, i % (2 * LEVELS * PIXELS)))
@@ -102,7 +106,8 @@ def initialize_members(initial: FPtr, state: FPtr, field: FPtr, displacement: FP
         put(displacement, 2 * i + 1, D2(0))
 
 
-def evolve(state: FPtr, innovation: FPtr, params: FPtr, field: FPtr, count: Int32):
+def evolve[SIZE: Int = 192](state: FPtr, innovation: FPtr, params: FPtr, field: FPtr, count: Int32):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= Int(count) * PIXELS:
         return
@@ -122,7 +127,8 @@ def evolve(state: FPtr, innovation: FPtr, params: FPtr, field: FPtr, count: Int3
     put(field, i, result)
 
 
-def field_minimum(field: FPtr, lows: FPtr):
+def field_minimum[SIZE: Int = 192](field: FPtr, lows: FPtr):
+    comptime PIXELS = SIZE * SIZE
     var member = block_idx.x
     var t = thread_idx.x
     var low = D2(3.4e38, 0)
@@ -140,7 +146,8 @@ def field_minimum(field: FPtr, lows: FPtr):
         put(lows, member, shared[0])
 
 
-def apply_mask(field: FPtr, mask: FPtr, lows: FPtr, count: Int32):
+def apply_mask[SIZE: Int = 192](field: FPtr, mask: FPtr, lows: FPtr, count: Int32):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= Int(count) * PIXELS:
         return
@@ -151,7 +158,8 @@ def apply_mask(field: FPtr, mask: FPtr, lows: FPtr, count: Int32):
     put(field, i, value)
 
 
-def count_dry(field: FPtr, lows: FPtr, dry: IPtr):
+def count_dry[SIZE: Int = 192](field: FPtr, lows: FPtr, dry: IPtr):
+    comptime PIXELS = SIZE * SIZE
     var m = block_idx.x
     var t = thread_idx.x
     var count = Int32(0)
@@ -170,7 +178,8 @@ def count_dry(field: FPtr, lows: FPtr, dry: IPtr):
         dry[m] = s[0]
 
 
-def local_sort(field: FPtr, keys: FPtr, indices: IPtr):
+def local_sort[SIZE: Int = 192](field: FPtr, keys: FPtr, indices: IPtr):
+    comptime PIXELS = SIZE * SIZE
     var t = thread_idx.x
     var group = block_idx.x
     var base = group * 1024
@@ -203,7 +212,8 @@ def local_sort(field: FPtr, keys: FPtr, indices: IPtr):
         indices[base + j] = si[j]
 
 
-def merge_sort(source: FPtr, source_i: IPtr, target: FPtr, target_i: IPtr, width: Int32, total: Int32):
+def merge_sort[SIZE: Int = 192](source: FPtr, source_i: IPtr, target: FPtr, target_i: IPtr, width: Int32, total: Int32):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= Int(total):
         return
@@ -236,7 +246,9 @@ def merge_sort(source: FPtr, source_i: IPtr, target: FPtr, target_i: IPtr, width
     target_i[dest] = index
 
 
-def cdf_match(keys: FPtr, indices: IPtr, lows: FPtr, dry: IPtr, params: FPtr, matched: FPtr, count: Int32):
+def cdf_match[SIZE: Int = 192](keys: FPtr, indices: IPtr, lows: FPtr, dry: IPtr, params: FPtr, matched: FPtr, count: Int32):
+    comptime PIXELS = SIZE * SIZE
+    comptime PARAM_TARGET = 60
     var i = global_idx.x
     if i >= Int(count) * PIXELS:
         return
@@ -257,7 +269,7 @@ def cdf_match(keys: FPtr, indices: IPtr, lows: FPtr, dry: IPtr, params: FPtr, ma
         else:
             b = mid
     if PIXELS - a > wet:
-        var r = dd_mul(dd_div(D2(Float32(dry[m]), 0), D2(PIXELS, 0)), D2(PIXELS - 1, 0))
+        var r = dd_mul(dd_div(D2(Float32(dry[m]), 0), D2(Float32(PIXELS), 0)), D2(Float32(PIXELS - 1), 0))
         var index = dd_floor(r)
         var fraction = dd_add(r, -D2(Float32(index), 0))
         cutoff = dd_add(dd_mul(get(target, index), dd_add(D2(1, 0), -fraction)), dd_mul(get(target, min(index + 1, PIXELS - 1)), fraction))
@@ -267,12 +279,13 @@ def cdf_match(keys: FPtr, indices: IPtr, lows: FPtr, dry: IPtr, params: FPtr, ma
     put(matched, m * PIXELS + Int(indices[i]), value)
 
 
-def mask_rows(field: FPtr, distance: IPtr):
+def mask_rows[SIZE: Int = 192](field: FPtr, distance: IPtr, threshold_hi: Float32, threshold_lo: Float32):
+    comptime N = SIZE
     var row = global_idx.x
     var base = row * N
     var dist = Int32(100000)
     for x in range(N):
-        if not less(get(field, base + x), D2(10, 0)):
+        if not less(get(field, base + x), D2(threshold_hi, threshold_lo)):
             dist = 0
         else:
             dist += 1
@@ -284,7 +297,9 @@ def mask_rows(field: FPtr, distance: IPtr):
         distance[base + x] = dist
 
 
-def mask_columns(distance: IPtr, mask: FPtr):
+def mask_columns[SIZE: Int = 192](distance: IPtr, mask: FPtr, radius: Int32):
+    comptime N = SIZE
+    comptime PIXELS = SIZE * SIZE
     var column = global_idx.x
     var m = column // N
     var x = column % N
@@ -300,13 +315,17 @@ def mask_columns(distance: IPtr, mask: FPtr):
         var i = m * PIXELS + y * N + x
         dist = min(distance[i], dist + 1)
         # Empty fields have no finite distance anywhere, including this column.
-        var value = dd_div(D2(Float32(max(0, min(11, 15 - Int(dist)))), 0), D2(11, 0))
+        var value = dd_div(D2(Float32(max(0, min(11, Int(radius) + 11 - Int(dist)))), 0), D2(11, 0))
         if dist >= 100000:
             value = D2(nan[DType.float32](), 0)
         put(mask, i, value)
 
 
-def perturb(params: FPtr, velocity: FPtr, along_h: Float32, along_l: Float32, across_h: Float32, across_l: Float32, count: Int32):
+def perturb[SIZE: Int = 192](params: FPtr, velocity: FPtr, along_h: Float32, along_l: Float32, across_h: Float32, across_l: Float32, count: Int32, scale_hi: Float32, scale_lo: Float32):
+    comptime PIXELS = SIZE * SIZE
+    comptime PARAM_DIRECTION = 60 + 2 * PIXELS
+    comptime PARAM_VELOCITY = 60 + 6 * PIXELS
+    comptime PARAM_EPS = 60 + 10 * PIXELS
     var i = global_idx.x
     if i >= Int(count) * PIXELS:
         return
@@ -316,11 +335,13 @@ def perturb(params: FPtr, velocity: FPtr, along_h: Float32, along_l: Float32, ac
     var vy = get(params + PARAM_DIRECTION, PIXELS + p)
     var along = dd_mul(D2(along_h, along_l), get(params + PARAM_EPS, 2 * m))
     var across = dd_mul(D2(across_h, across_l), get(params + PARAM_EPS, 2 * m + 1))
-    put(velocity, (m * 2) * PIXELS + p, dd_add(get(params + PARAM_VELOCITY, p), dd_div(dd_add(dd_mul(along, vx), -dd_mul(across, vy)), D2(6, 0))))
-    put(velocity, (m * 2 + 1) * PIXELS + p, dd_add(get(params + PARAM_VELOCITY, PIXELS + p), dd_div(dd_add(dd_mul(along, vy), dd_mul(across, vx)), D2(6, 0))))
+    put(velocity, (m * 2) * PIXELS + p, dd_add(get(params + PARAM_VELOCITY, p), dd_div(dd_add(dd_mul(along, vx), -dd_mul(across, vy)), D2(scale_hi, scale_lo))))
+    put(velocity, (m * 2 + 1) * PIXELS + p, dd_add(get(params + PARAM_VELOCITY, PIXELS + p), dd_div(dd_add(dd_mul(along, vy), dd_mul(across, vx)), D2(scale_hi, scale_lo))))
 
 
-def advection(field: FPtr, velocity: FPtr, displacement: FPtr, output: FPtr, lead: Int32, leads: Int32, count: Int32):
+def advection[SIZE: Int = 192](field: FPtr, velocity: FPtr, displacement: FPtr, output: FPtr, lead: Int32, leads: Int32, count: Int32):
+    comptime N = SIZE
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= Int(count) * PIXELS:
         return
@@ -334,12 +355,12 @@ def advection(field: FPtr, velocity: FPtr, displacement: FPtr, output: FPtr, lea
     var vx = get(velocity, base + p)
     var vy = get(velocity, base + PIXELS + p)
     if lead != 0:
-        vx = sample(velocity, base, dd_add(x, dx), dd_add(y, dy), True)
-        vy = sample(velocity, base + PIXELS, dd_add(x, dx), dd_add(y, dy), True)
+        vx = sample[SIZE](velocity, base, dd_add(x, dx), dd_add(y, dy), True)
+        vy = sample[SIZE](velocity, base + PIXELS, dd_add(x, dx), dd_add(y, dy), True)
     var hx = dd_add(x, dd_add(dx, -dd_mul(vx, D2(0.5, 0))))
     var hy = dd_add(y, dd_add(dy, -dd_mul(vy, D2(0.5, 0))))
-    dx = dd_add(dx, -sample(velocity, base, hx, hy, True))
-    dy = dd_add(dy, -sample(velocity, base + PIXELS, hx, hy, True))
+    dx = dd_add(dx, -sample[SIZE](velocity, base, hx, hy, True))
+    dy = dd_add(dy, -sample[SIZE](velocity, base + PIXELS, hx, hy, True))
     put(displacement, base + p, dx)
     put(displacement, base + PIXELS + p, dy)
-    put(output, (m * Int(leads) + Int(lead)) * PIXELS + p, sample(field, m * PIXELS, dd_add(x, dx), dd_add(y, dy), False))
+    put(output, (m * Int(leads) + Int(lead)) * PIXELS + p, sample[SIZE](field, m * PIXELS, dd_add(x, dx), dd_add(y, dy), False))

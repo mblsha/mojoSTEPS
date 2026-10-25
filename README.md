@@ -2,13 +2,13 @@
 
 [![CPU research checks](https://github.com/mblsha/mojoSTEPS/actions/workflows/ci.yml/badge.svg)](https://github.com/mblsha/mojoSTEPS/actions/workflows/ci.yml)
 
-A standalone **Mojo/MAX forecast core** for a fixed configuration of the
+A standalone **Mojo/MAX forecast core** with runtime geometry and physical parameters for the
 [pySTEPS](https://pysteps.github.io/) STEPS stochastic precipitation nowcast.
 CPU and Apple Metal GPU backends execute the forecast without Python. A small
-Python interface prepares arrays, runs a synthetic demo and checks results
+Python interface aligns multiple radar sources, answers regional/local queries and checks results
 against pySTEPS 1.21.2. A [C example](examples/forecast.c) calls the same core.
 
-**Research release 0.1.0.** This ports one configuration, rather than the full
+**Research software.** This ports the spatial AR(2) STEPS model, rather than the full
 pySTEPS library. It has numerical parity tests; forecast skill on real storms
 and operational reliability require separate evaluation.
 
@@ -44,8 +44,10 @@ On Apple silicon:
 MOJOSTEPS_TEST_GPU=1 .venv/bin/python -m pytest -q
 ```
 
-The GPU backend keeps fitting, RNG, FFT/cascades, ensemble evolution, CDF
-matching, masking and advection on Metal, with a final output readback. CPU
+The GPU backend keeps RNG, FFT/cascades, ensemble evolution, CDF matching,
+masking and advection on Metal, with a final output readback. Model fitting is
+on Metal for 64/128/192-square grids and native CPU float64 for 256/512 to
+preserve large-grid numerical parity. CPU
 validation, allocation, launch scheduling and final conversion remain. `workers=1`
 is supported; it limits application parallelism, not OS scheduling or driver threads.
 
@@ -53,14 +55,14 @@ is supported; it limits application parallelism, not OS scheduling or driver thr
 
 | Contract | Value |
 | --- | --- |
-| Input | Three 192 × 192 dBZ fields, oldest first |
-| Motion | Two 192 × 192 fields: x/y pixels per five-minute step |
-| Ensemble / horizon | 1–96 members; 1–14 leads (+5 through +70 min) |
-| Scale | 0.5 km pixels; 5 min timesteps |
+| Input | Three N × N dBZ fields; N = 64, 128, 192, 256 or 512 |
+| Motion | Two N × N fields: x/y pixels per configured scan |
+| Ensemble / horizon | Defaults 1–96 members / 1–14 leads; configurable limits through 4096 / 288 |
+| Scale | Runtime pixel scale and scan interval; defaults 0.5 km / 5 min |
 | Model | Six Gaussian cascades; nonparametric noise; AR(2) |
 | Postprocessing | Incremental mask; empirical CDF matching |
 | Motion perturbation | BPS |
-| Rain threshold / no rain | 10 / −10 dBZ |
+| Rain threshold / no rain | Runtime thresholds; defaults 10 / −10 dBZ |
 | Arithmetic | CPU float64; GPU paired float32 (~48 significant bits) |
 | Output | float64 [member, lead, y, x]; NaN outside advected domain |
 
@@ -75,6 +77,32 @@ Input motion dtype matters: float32 and float64 follow the corresponding pySTEPS
 interpolation semantics. Fewer than 16 rain pixels across all history fields
 uses latest-field persistence. Degenerate models are rejected. See [API](docs/API.md)
 for validation, units, thread safety, memory and the C ABI.
+
+## Multi-source regional forecasting
+
+One library contains Mojo generic kernels for all five grid sizes. Grid selection,
+resolution, scan interval and thresholds are runtime arguments: changing a radar
+source does not require rebuilding. The native forecast core remains Python-free.
+
+```python
+from mojosteps import Forecast, ForecastConfig
+engine = Forecast("gpu")
+config = ForecastConfig(size=512, kmperpixel=1.0, timestep=5.0)
+# history: [3,512,512] dBZ; velocity: [2,512,512] pixels per scan
+forecast = engine.forecast(history, velocity, 14, members=96, config=config)
+```
+
+The optional `radar` package extra provides projected-grid/CF NetCDF adapters.
+The [regional API](docs/REGIONAL.md) accepts dBZ, explicit Z–R rain-rate conversions
+and explicit PNG colour mappings; aligns sources to one grid; selects by priority
+at exact observation times; and serves multiple area probabilities from one
+ensemble. Missing coverage abstains. Rectangular domains use overlapping tiles.
+
+Run the synthetic two-source / three-location example after bootstrap/build:
+
+```sh
+.venv/bin/python examples/multi_source.py --backend gpu --size 256 --kmperpixel 1
+```
 
 ## Evidence and reproducibility
 

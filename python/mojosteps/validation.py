@@ -3,17 +3,19 @@
 import contextlib
 import io
 import numpy as np
+from .config import ForecastConfig
 
 
-def reference_forecast(history, velocity, leads, *, members=96, workers=1, seed=20260817):
+def reference_forecast(history, velocity, leads, *, members=96, workers=1, seed=20260817, config=None):
+    config=config or ForecastConfig()
     # Persistence is mojoSTEPS' documented sparse-input policy, outside pySTEPS.
-    if np.count_nonzero(history >= 10) < 16:
+    if np.count_nonzero(history >= config.precip_thr) < 16:
         return np.tile(history[-1], (members, leads, 1, 1))
     with contextlib.redirect_stdout(io.StringIO()):
         from pysteps.nowcasts.steps import forecast
         return forecast(history, velocity, leads, n_ens_members=members,
-                        n_cascade_levels=6, precip_thr=10.0, norain_thr=-10.0,
-                        kmperpixel=.5, timestep=5.0, num_workers=workers,
+                        n_cascade_levels=6, precip_thr=config.precip_thr, norain_thr=config.norain_thr,
+                        kmperpixel=config.kmperpixel, timestep=config.timestep, num_workers=workers,
                         seed=seed, vel_pert_method="bps")
 
 

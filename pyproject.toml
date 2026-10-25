@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "mojosteps"
 version = "0.1.0"
-description = "Standalone Mojo/MAX kernels for a fixed STEPS research nowcast"
+description = "Runtime-configurable Mojo/MAX STEPS forecasts and multi-source regional adapters"
 readme = "README.md"
 requires-python = ">=3.12"
 license = "BSD-3-Clause"
@@ -16,6 +16,7 @@ classifiers = ["Development Status :: 3 - Alpha", "Intended Audience :: Science/
 
 [project.optional-dependencies]
 research = ["numpy==2.5.1", "scipy==1.18.0", "pysteps==1.21.2", "dask==2026.8.0", "pytest>=8,<10", "build>=1.2"]
+radar = ["netCDF4>=1.7", "pyproj>=3.6", "shapely>=2.0"]
 demo = ["matplotlib>=3.9"]
 
 [project.scripts]

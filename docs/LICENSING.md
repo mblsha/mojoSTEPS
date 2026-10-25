@@ -23,6 +23,9 @@ Generated synthetic preview/receipts are project outputs, also under BSD-3-Claus
 file hashes are recorded in `third_party/pocketfft/UPSTREAM.json`. Additional RNG
 notice URLs and hashes are recorded in `third_party/PROVENANCE.json`.
 NumPy/SciPy/pySTEPS/matplotlib/Dask are installed externally, not vendored.
+The optional radar adapters also install netCDF4, pyproj and Shapely externally.
+Their packages and native dependencies retain their own terms; no such
+dependency binaries or implementation sources are bundled in mojoSTEPS.
 
 The default build replaces the prototype's FFTW bridge with PocketFFT. It does
 not link FFTW or include its implementation. This avoids imposing FFTW's GPL
@@ -56,5 +59,5 @@ runtime stack OSI-licensed.
 Native binaries/wheels, containers and hosted-service deployments need their own
 review of the applicable runtime redistributables, notices and application
 requirements before distribution. No such binaries or hosted service are part
-of this source research release. The Python wheel is a pure Python boundary;
+of this source research release. The Python wheel contains the pure Python boundary and adapters;
 it does not embed a native forecast library or runtime.

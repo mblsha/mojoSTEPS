@@ -39,6 +39,10 @@ jobs:
           cc -O2 examples/forecast.c -o .build/forecast-c "${extra[@]}"
           .build/forecast-c "$PWD/.build/libmojosteps_cpu.$suffix" cpu .build/ci-demo/input.f64 .build/ci-demo/c-output.f64 4 3 1
           .venv/bin/python scripts/check_c_output.py .build/ci-demo
+      - name: Multi-source regional demo and runtime C ABI
+        run: |
+          .venv/bin/python examples/multi_source.py --backend cpu --size 256 --kmperpixel 1 > .build/regional-demo.json
+          .venv/bin/python scripts/check_runtime_c.py --backend cpu
       - name: Build and inspect source distributions
         run: |
           .venv/bin/python -m build --outdir .build/dist
@@ -51,3 +55,4 @@ jobs:
           path: |
             .build/ci-demo/summary.json
             .build/*.manifest.json
+            .build/regional-demo.json

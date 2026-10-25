@@ -30,7 +30,7 @@ def build(backend):
         library=output/f'libmojosteps_{name}.{suffix}'
         cmd=[mojo,'build','--emit','shared-lib','--fp-mode','contract=off','-Xlinker',str(cpp),'-Xlinker',('-lc++' if platform.system()=='Darwin' else '-lstdc++'),str(ROOT/'src/mojo'/f'{source}.mojo'),'-o',str(library)]
         subprocess.run(cmd,check=True)
-        manifest={'library':library.name,'sha256':hashlib.sha256(library.read_bytes()).hexdigest(),'source_sha256':sources,'fft':'PocketFFT (vendored BSD-3-Clause)','command':[str(Path(arg).relative_to(ROOT)) if arg.startswith(str(ROOT)+'/') else arg for arg in cmd],'mojo_version':subprocess.check_output([mojo,'--version'],text=True).strip()}
+        manifest={'library':library.name,'sha256':hashlib.sha256(library.read_bytes()).hexdigest(),'source_sha256':sources,'abi':2,'supported_sizes':[64,128,192,256,512],'fft':'PocketFFT (vendored BSD-3-Clause)','command':[str(Path(arg).relative_to(ROOT)) if arg.startswith(str(ROOT)+'/') else arg for arg in cmd],'mojo_version':subprocess.check_output([mojo,'--version'],text=True).strip()}
         library.with_suffix('.manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
         print(library,flush=True)
 

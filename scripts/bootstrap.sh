@@ -14,9 +14,9 @@ if test "$(uname -s)" = Darwin; then
   CC="$research_cc" ARCHFLAGS='-arch arm64' \
     CFLAGS="${CFLAGS:-} -I$research_brew_prefix/opt/libomp/include" \
     LDFLAGS="${LDFLAGS:-} -L$research_brew_prefix/opt/libomp/lib -Wl,-rpath,$research_brew_prefix/opt/libomp/lib" \
-    uv --no-config pip install --python .venv/bin/python -e '.[research,demo]'
+    uv --no-config pip install --python .venv/bin/python -e '.[research,demo,radar]'
 else
-  uv --no-config pip install --python .venv/bin/python -e '.[research,demo]'
+  uv --no-config pip install --python .venv/bin/python -e '.[research,demo,radar]'
 fi
 uv venv --python 3.12 --allow-existing .build/toolchain
 # Keep the compiler/SDK isolated from the numerical reference environment.
