@@ -1,7 +1,7 @@
 include LICENSE NOTICE README.md CITATION.cff CHANGELOG.md CONTRIBUTING.md
 recursive-include src *.mojo *.cpp
 recursive-include include *.h
-recursive-include scripts *.py *.sh *.cpp
+recursive-include scripts *.py *.sh *.cpp *.mm
 recursive-include examples *.c
 recursive-include tests *.py
 recursive-include docs *.md *.png

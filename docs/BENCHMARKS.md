@@ -42,3 +42,5 @@ application parallelism; it does not impose process CPU affinity or a CPU quota.
 No operational radar data or results from the earlier FFTW prototype are used.
 
 For a controlled comparison of CPU FFT libraries, see the [matched FFTW/PocketFFT study](FFT_COMPARISON.md), including measured/patient plans and saved-wisdom restarts.
+
+The [RAM and Metal resource measurements](MEMORY.md) compare the CPU/GPU cores with pySTEPS using the same full forecast.

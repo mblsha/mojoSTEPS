@@ -1,0 +1,1015 @@
+{
+  "measured_date": "2026-10-25",
+  "protocol": "docs/MEMORY.md",
+  "hardware": {
+    "machdep.cpu.brand_string": "Apple M5 Ultra",
+    "hw.physicalcpu": "36",
+    "hw.memsize": "274877906944"
+  },
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "versions": {
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "pysteps": "1.21.2"
+  },
+  "observer": {
+    "source_sha256": "52912481e8382de2f87e8d39a349f871c1d668cc00b2606f89eebc25966b3ff2",
+    "observer_sha256": "47925beb4230447cf4b18a3c4e23102ee89d1613962cd5f0791ebac999f42661",
+    "command": [
+      "clang++",
+      "-std=c++17",
+      "-O2",
+      "-dynamiclib",
+      "-fobjc-arc",
+      "-framework",
+      "Foundation",
+      "-framework",
+      "Metal",
+      "$ROOT/scripts/memory_probe/probe.mm",
+      "-o",
+      "$ROOT/.build/memory/probe.dylib"
+    ],
+    "cxx_version": "Apple clang version 21.0.0 (clang-2100.3.34.2)"
+  },
+  "runner_sha256": "912169494ca86db98ae27738cc00a6442b4a7da23cd80619d8af3a0e3d3c1752",
+  "input_sha256": {
+    "history": "e39946098ba47a897fe83b44b797b8d5b4ae40435eb211814da9737f2f2d8aee",
+    "velocity": "09f240abdccb7ec9a5f2bd981b84b4a11ad569f1c508791a0c2ebb10f717bc97"
+  },
+  "fixture_file_sha256": "929e9a1f4a4cbc6fb4a597586a83957dfa5a2c5041bd25eb6eebbb21282b272e",
+  "metal_control": {
+    "allocation_bytes": 67108864,
+    "metal_before": 65536,
+    "metal_with_allocation": 67174400,
+    "metal_after_release": 65536,
+    "before": {
+      "rss_current": 42598400,
+      "rss_lifetime_peak": 42598400,
+      "physical_footprint_current": 25461360,
+      "physical_footprint_lifetime_peak": 25461360,
+      "metal_allocated": 65536,
+      "compressed": 0,
+      "graphics_footprint": 16384,
+      "graphics_nofootprint": 0
+    },
+    "after": {
+      "rss_current": 42631168,
+      "rss_lifetime_peak": 109740032,
+      "physical_footprint_current": 25461360,
+      "physical_footprint_lifetime_peak": 92603040,
+      "metal_allocated": 65536,
+      "compressed": 0,
+      "graphics_footprint": 16384,
+      "graphics_nofootprint": 0
+    },
+    "unified": true,
+    "device": "Apple M5 Ultra"
+  },
+  "cells": {
+    "cpu-1": {
+      "backend": "cpu",
+      "workers": 1,
+      "members": 96,
+      "leads": 14,
+      "calls": [
+        {
+          "call": 0,
+          "cold": true,
+          "seconds": 7.263810375006869,
+          "baseline": {
+            "rss_current": 46497792,
+            "rss_lifetime_peak": 46497792,
+            "physical_footprint_current": 31392296,
+            "physical_footprint_lifetime_peak": 31392296,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 461996032,
+            "rss_lifetime_peak": 462028800,
+            "physical_footprint_current": 446612392,
+            "physical_footprint_lifetime_peak": 446645160,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 6533,
+          "after_return_with_output": {
+            "rss_current": 461996032,
+            "rss_lifetime_peak": 462028800,
+            "physical_footprint_current": 446612392,
+            "physical_footprint_lifetime_peak": 446645160,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 462012416,
+            "rss_lifetime_peak": 462028800,
+            "physical_footprint_current": 446628776,
+            "physical_footprint_lifetime_peak": 446645160,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "63f251466fe5d6b8652d70c98ec02391dea9aca823fbb85b30fff1f08dda6c81"
+        },
+        {
+          "call": 1,
+          "cold": false,
+          "seconds": 7.335877292003715,
+          "baseline": {
+            "rss_current": 462012416,
+            "rss_lifetime_peak": 462028800,
+            "physical_footprint_current": 446628776,
+            "physical_footprint_lifetime_peak": 446645160,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 462323712,
+            "rss_lifetime_peak": 462323712,
+            "physical_footprint_current": 446940072,
+            "physical_footprint_lifetime_peak": 446940072,
+            "metal_allocated": 0,
+            "compressed": 11059200,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 6604,
+          "after_return_with_output": {
+            "rss_current": 451379200,
+            "rss_lifetime_peak": 462323712,
+            "physical_footprint_current": 446890920,
+            "physical_footprint_lifetime_peak": 446940072,
+            "metal_allocated": 0,
+            "compressed": 10895360,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 451411968,
+            "rss_lifetime_peak": 462323712,
+            "physical_footprint_current": 446923688,
+            "physical_footprint_lifetime_peak": 446940072,
+            "metal_allocated": 0,
+            "compressed": 10895360,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "63f251466fe5d6b8652d70c98ec02391dea9aca823fbb85b30fff1f08dda6c81"
+        }
+      ],
+      "before_setup": {
+        "rss_current": 38633472,
+        "rss_lifetime_peak": 38649856,
+        "physical_footprint_current": 24592936,
+        "physical_footprint_lifetime_peak": 24691240,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "ready": {
+        "rss_current": 46497792,
+        "rss_lifetime_peak": 46497792,
+        "physical_footprint_current": 31392296,
+        "physical_footprint_lifetime_peak": 31392296,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "seed": 20260817,
+      "process_peak_rss_bytes": 462323712,
+      "process_peak_physical_footprint_bytes": 446940072,
+      "peak_metal_resource_bytes": 0,
+      "metal_device": "none",
+      "metal_unified": false,
+      "thread_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "sampling_interval_target_us": 1000,
+      "units": "bytes; macOS ru_maxrss is bytes",
+      "notes": [
+        "Mach footprint includes charged CPU/GPU memory; Metal resource bytes overlap with that accounting.",
+        "RAM lifetime peaks are OS counters. Metal is sampled at approximately 1ms intervals.",
+        "No retained previous forecast, reference array, full-output bytes copy, or comparison temporaries.",
+        "Absolute peaks include interpreter, libraries, observer, inputs, runtime and one returned output."
+      ],
+      "library_sha256": "345a39dd426ae8865467b974302f4717cba790657c40cc4f0f88230918a7975d",
+      "source_sha256": {
+        "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+        "src/mojo/gpu_core.mojo": "7e23b4fdc75a20132786d4f34b18766bfc14f1e49061fd0eb87ef83dda34e8af",
+        "src/mojo/gpu_fft.mojo": "96855050a5acb498660f665596613ac26ea9f492fafc22110040724ecdada1f4",
+        "src/mojo/gpu_fields.mojo": "ee91ddcf001e00b9eecd1dd058b19436c959c56a7fcd9760a9665f2518b34ddb",
+        "src/mojo/gpu_model.mojo": "22ad9ff62753267c49e5b381e543d9035c3bf84e9db528ef218eadfcebbd14a6",
+        "src/mojo/gpu_noise.mojo": "8718b4724ec8951e21d54b0ae8cdf0af2f59a52c77f947e4c8419869e5f704fc",
+        "src/mojo/gpu_resident.mojo": "3a3dd026babfe9d8ed765313d66ac68aec491426737ec831e90fc62c9019ff6a",
+        "src/mojo/gpu_rng.mojo": "28210804e435bed3322a1cfa5002a8198adae0676086f4c27c8a6298123ce536",
+        "src/mojo/native_core.mojo": "faf52d35a5ae28e16178c3dc871db374394ca710344817546be5650beb66b626",
+        "src/mojo/native_fft.mojo": "fdce9a13a676e70398df28127a9602b3a702286b1ec7ab0f6223f2233f70dfef",
+        "src/mojo/native_fields.mojo": "b686b50a817dc2f64a8e79e6188f03d1d885c44b8754b208567ddb622bc0d35e",
+        "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+        "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+        "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+        "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+        "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+      },
+      "source_receipt_sha256": "8dff4d1a7e94e6dcdfc065fc0ddda7af9a08581ad110bcd92af6cce880202549"
+    },
+    "cpu-16": {
+      "backend": "cpu",
+      "workers": 16,
+      "members": 96,
+      "leads": 14,
+      "calls": [
+        {
+          "call": 0,
+          "cold": true,
+          "seconds": 0.9933369169884827,
+          "baseline": {
+            "rss_current": 45432832,
+            "rss_lifetime_peak": 45432832,
+            "physical_footprint_current": 30310928,
+            "physical_footprint_lifetime_peak": 30310928,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 574357504,
+            "rss_lifetime_peak": 574390272,
+            "physical_footprint_current": 558597128,
+            "physical_footprint_lifetime_peak": 558629896,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 859,
+          "after_return_with_output": {
+            "rss_current": 574357504,
+            "rss_lifetime_peak": 574390272,
+            "physical_footprint_current": 558597128,
+            "physical_footprint_lifetime_peak": 558629896,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 574373888,
+            "rss_lifetime_peak": 574390272,
+            "physical_footprint_current": 558613512,
+            "physical_footprint_lifetime_peak": 558629896,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "63f251466fe5d6b8652d70c98ec02391dea9aca823fbb85b30fff1f08dda6c81"
+        },
+        {
+          "call": 1,
+          "cold": false,
+          "seconds": 0.9537623339856509,
+          "baseline": {
+            "rss_current": 574373888,
+            "rss_lifetime_peak": 574390272,
+            "physical_footprint_current": 558613512,
+            "physical_footprint_lifetime_peak": 558629896,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 576618496,
+            "rss_lifetime_peak": 576634880,
+            "physical_footprint_current": 560858120,
+            "physical_footprint_lifetime_peak": 560874504,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 866,
+          "after_return_with_output": {
+            "rss_current": 576602112,
+            "rss_lifetime_peak": 576634880,
+            "physical_footprint_current": 560841736,
+            "physical_footprint_lifetime_peak": 560874504,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 576602112,
+            "rss_lifetime_peak": 576634880,
+            "physical_footprint_current": 560841736,
+            "physical_footprint_lifetime_peak": 560874504,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "63f251466fe5d6b8652d70c98ec02391dea9aca823fbb85b30fff1f08dda6c81"
+        }
+      ],
+      "before_setup": {
+        "rss_current": 38174720,
+        "rss_lifetime_peak": 38191104,
+        "physical_footprint_current": 24101368,
+        "physical_footprint_lifetime_peak": 24199672,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "ready": {
+        "rss_current": 45432832,
+        "rss_lifetime_peak": 45432832,
+        "physical_footprint_current": 30310928,
+        "physical_footprint_lifetime_peak": 30310928,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "seed": 20260817,
+      "process_peak_rss_bytes": 576634880,
+      "process_peak_physical_footprint_bytes": 560874504,
+      "peak_metal_resource_bytes": 0,
+      "metal_device": "none",
+      "metal_unified": false,
+      "thread_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "sampling_interval_target_us": 1000,
+      "units": "bytes; macOS ru_maxrss is bytes",
+      "notes": [
+        "Mach footprint includes charged CPU/GPU memory; Metal resource bytes overlap with that accounting.",
+        "RAM lifetime peaks are OS counters. Metal is sampled at approximately 1ms intervals.",
+        "No retained previous forecast, reference array, full-output bytes copy, or comparison temporaries.",
+        "Absolute peaks include interpreter, libraries, observer, inputs, runtime and one returned output."
+      ],
+      "library_sha256": "345a39dd426ae8865467b974302f4717cba790657c40cc4f0f88230918a7975d",
+      "source_sha256": {
+        "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+        "src/mojo/gpu_core.mojo": "7e23b4fdc75a20132786d4f34b18766bfc14f1e49061fd0eb87ef83dda34e8af",
+        "src/mojo/gpu_fft.mojo": "96855050a5acb498660f665596613ac26ea9f492fafc22110040724ecdada1f4",
+        "src/mojo/gpu_fields.mojo": "ee91ddcf001e00b9eecd1dd058b19436c959c56a7fcd9760a9665f2518b34ddb",
+        "src/mojo/gpu_model.mojo": "22ad9ff62753267c49e5b381e543d9035c3bf84e9db528ef218eadfcebbd14a6",
+        "src/mojo/gpu_noise.mojo": "8718b4724ec8951e21d54b0ae8cdf0af2f59a52c77f947e4c8419869e5f704fc",
+        "src/mojo/gpu_resident.mojo": "3a3dd026babfe9d8ed765313d66ac68aec491426737ec831e90fc62c9019ff6a",
+        "src/mojo/gpu_rng.mojo": "28210804e435bed3322a1cfa5002a8198adae0676086f4c27c8a6298123ce536",
+        "src/mojo/native_core.mojo": "faf52d35a5ae28e16178c3dc871db374394ca710344817546be5650beb66b626",
+        "src/mojo/native_fft.mojo": "fdce9a13a676e70398df28127a9602b3a702286b1ec7ab0f6223f2233f70dfef",
+        "src/mojo/native_fields.mojo": "b686b50a817dc2f64a8e79e6188f03d1d885c44b8754b208567ddb622bc0d35e",
+        "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+        "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+        "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+        "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+        "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+      },
+      "source_receipt_sha256": "52f9bdef084e2c2c39c18c988879cb471f320c69512de7aaf17366ad63416175"
+    },
+    "gpu-1": {
+      "backend": "gpu",
+      "workers": 1,
+      "members": 96,
+      "leads": 14,
+      "calls": [
+        {
+          "call": 0,
+          "cold": true,
+          "seconds": 1.4422557500074618,
+          "baseline": {
+            "rss_current": 50364416,
+            "rss_lifetime_peak": 50364416,
+            "physical_footprint_current": 32359144,
+            "physical_footprint_lifetime_peak": 32359144,
+            "metal_allocated": 65536,
+            "compressed": 0,
+            "graphics_footprint": 16384,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 872022016,
+            "rss_lifetime_peak": 872022016,
+            "physical_footprint_current": 3051144800,
+            "physical_footprint_lifetime_peak": 3051275872,
+            "metal_allocated": 2507145216,
+            "compressed": 0,
+            "graphics_footprint": 2210021376,
+            "graphics_nofootprint": 786432
+          },
+          "sampling_points": 1292,
+          "after_return_with_output": {
+            "rss_current": 867368960,
+            "rss_lifetime_peak": 872022016,
+            "physical_footprint_current": 2544436856,
+            "physical_footprint_lifetime_peak": 3051275872,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 1702494208,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 862044160,
+            "rss_lifetime_peak": 872022016,
+            "physical_footprint_current": 842614320,
+            "physical_footprint_lifetime_peak": 3051275872,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 720896,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "13ee03d50999febe6a93b95f8fe52c9d9a45ee5a9533e418c5aad8fbad1df85b"
+        },
+        {
+          "call": 1,
+          "cold": false,
+          "seconds": 0.6300679590203799,
+          "baseline": {
+            "rss_current": 862044160,
+            "rss_lifetime_peak": 872022016,
+            "physical_footprint_current": 842614320,
+            "physical_footprint_lifetime_peak": 3051275872,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 720896,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 874856448,
+            "rss_lifetime_peak": 874856448,
+            "physical_footprint_current": 3054782072,
+            "physical_footprint_lifetime_peak": 3054782072,
+            "metal_allocated": 2507145216,
+            "compressed": 0,
+            "graphics_footprint": 2210021376,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 562,
+          "after_return_with_output": {
+            "rss_current": 870187008,
+            "rss_lifetime_peak": 874856448,
+            "physical_footprint_current": 2547910264,
+            "physical_footprint_lifetime_peak": 3054782072,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 1703149568,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 864862208,
+            "rss_lifetime_peak": 874856448,
+            "physical_footprint_current": 845432368,
+            "physical_footprint_lifetime_peak": 3054782072,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 720896,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "13ee03d50999febe6a93b95f8fe52c9d9a45ee5a9533e418c5aad8fbad1df85b"
+        }
+      ],
+      "before_setup": {
+        "rss_current": 43286528,
+        "rss_lifetime_peak": 43286528,
+        "physical_footprint_current": 26182352,
+        "physical_footprint_lifetime_peak": 26182352,
+        "metal_allocated": 65536,
+        "compressed": 0,
+        "graphics_footprint": 16384,
+        "graphics_nofootprint": 0
+      },
+      "ready": {
+        "rss_current": 50364416,
+        "rss_lifetime_peak": 50364416,
+        "physical_footprint_current": 32359144,
+        "physical_footprint_lifetime_peak": 32359144,
+        "metal_allocated": 65536,
+        "compressed": 0,
+        "graphics_footprint": 16384,
+        "graphics_nofootprint": 0
+      },
+      "seed": 20260817,
+      "process_peak_rss_bytes": 874856448,
+      "process_peak_physical_footprint_bytes": 3054782072,
+      "peak_metal_resource_bytes": 2507145216,
+      "metal_device": "Apple M5 Ultra",
+      "metal_unified": true,
+      "thread_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "sampling_interval_target_us": 1000,
+      "units": "bytes; macOS ru_maxrss is bytes",
+      "notes": [
+        "Mach footprint includes charged CPU/GPU memory; Metal resource bytes overlap with that accounting.",
+        "RAM lifetime peaks are OS counters. Metal is sampled at approximately 1ms intervals.",
+        "No retained previous forecast, reference array, full-output bytes copy, or comparison temporaries.",
+        "Absolute peaks include interpreter, libraries, observer, inputs, runtime and one returned output."
+      ],
+      "library_sha256": "6ef732bc569e097c0f4ca436b4556e8f8e1040bf589ff76f5a89f5efe05ca571",
+      "source_sha256": {
+        "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+        "src/mojo/gpu_core.mojo": "7e23b4fdc75a20132786d4f34b18766bfc14f1e49061fd0eb87ef83dda34e8af",
+        "src/mojo/gpu_fft.mojo": "96855050a5acb498660f665596613ac26ea9f492fafc22110040724ecdada1f4",
+        "src/mojo/gpu_fields.mojo": "ee91ddcf001e00b9eecd1dd058b19436c959c56a7fcd9760a9665f2518b34ddb",
+        "src/mojo/gpu_model.mojo": "22ad9ff62753267c49e5b381e543d9035c3bf84e9db528ef218eadfcebbd14a6",
+        "src/mojo/gpu_noise.mojo": "8718b4724ec8951e21d54b0ae8cdf0af2f59a52c77f947e4c8419869e5f704fc",
+        "src/mojo/gpu_resident.mojo": "3a3dd026babfe9d8ed765313d66ac68aec491426737ec831e90fc62c9019ff6a",
+        "src/mojo/gpu_rng.mojo": "28210804e435bed3322a1cfa5002a8198adae0676086f4c27c8a6298123ce536",
+        "src/mojo/native_core.mojo": "faf52d35a5ae28e16178c3dc871db374394ca710344817546be5650beb66b626",
+        "src/mojo/native_fft.mojo": "fdce9a13a676e70398df28127a9602b3a702286b1ec7ab0f6223f2233f70dfef",
+        "src/mojo/native_fields.mojo": "b686b50a817dc2f64a8e79e6188f03d1d885c44b8754b208567ddb622bc0d35e",
+        "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+        "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+        "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+        "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+        "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+      },
+      "source_receipt_sha256": "9109f727ec29779d64e0b74f11665ada49cc3545c85c99514a4fb74b0dedde88"
+    },
+    "gpu-16": {
+      "backend": "gpu",
+      "workers": 16,
+      "members": 96,
+      "leads": 14,
+      "calls": [
+        {
+          "call": 0,
+          "cold": true,
+          "seconds": 1.587294416007353,
+          "baseline": {
+            "rss_current": 50937856,
+            "rss_lifetime_peak": 50937856,
+            "physical_footprint_current": 32981808,
+            "physical_footprint_lifetime_peak": 32981808,
+            "metal_allocated": 65536,
+            "compressed": 0,
+            "graphics_footprint": 16384,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 873054208,
+            "rss_lifetime_peak": 873054208,
+            "physical_footprint_current": 2800944616,
+            "physical_footprint_lifetime_peak": 2801075688,
+            "metal_allocated": 2507145216,
+            "compressed": 0,
+            "graphics_footprint": 2210021376,
+            "graphics_nofootprint": 786432
+          },
+          "sampling_points": 1366,
+          "after_return_with_output": {
+            "rss_current": 869842944,
+            "rss_lifetime_peak": 873054208,
+            "physical_footprint_current": 2551907912,
+            "physical_footprint_lifetime_peak": 2801075688,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 1709080576,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 863043584,
+            "rss_lifetime_peak": 873054208,
+            "physical_footprint_current": 843531824,
+            "physical_footprint_lifetime_peak": 2801075688,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 720896,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "13ee03d50999febe6a93b95f8fe52c9d9a45ee5a9533e418c5aad8fbad1df85b"
+        },
+        {
+          "call": 1,
+          "cold": false,
+          "seconds": 1.5125628330279142,
+          "baseline": {
+            "rss_current": 863043584,
+            "rss_lifetime_peak": 873054208,
+            "physical_footprint_current": 843531824,
+            "physical_footprint_lifetime_peak": 2801075688,
+            "metal_allocated": 720896,
+            "compressed": 0,
+            "graphics_footprint": 720896,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 875249664,
+            "rss_lifetime_peak": 875249664,
+            "physical_footprint_current": 3054388808,
+            "physical_footprint_lifetime_peak": 3054650952,
+            "metal_allocated": 2507145216,
+            "compressed": 13156352,
+            "graphics_footprint": 2209087488,
+            "graphics_nofootprint": 1048576
+          },
+          "sampling_points": 1329,
+          "after_return_with_output": {
+            "rss_current": 857718784,
+            "rss_lifetime_peak": 875249664,
+            "physical_footprint_current": 2547795528,
+            "physical_footprint_lifetime_peak": 3054650952,
+            "metal_allocated": 720896,
+            "compressed": 13123584,
+            "graphics_footprint": 1702494208,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 852393984,
+            "rss_lifetime_peak": 875249664,
+            "physical_footprint_current": 846005808,
+            "physical_footprint_lifetime_peak": 3054650952,
+            "metal_allocated": 720896,
+            "compressed": 13123584,
+            "graphics_footprint": 720896,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "13ee03d50999febe6a93b95f8fe52c9d9a45ee5a9533e418c5aad8fbad1df85b"
+        }
+      ],
+      "before_setup": {
+        "rss_current": 43614208,
+        "rss_lifetime_peak": 43614208,
+        "physical_footprint_current": 26542848,
+        "physical_footprint_lifetime_peak": 26542848,
+        "metal_allocated": 65536,
+        "compressed": 0,
+        "graphics_footprint": 16384,
+        "graphics_nofootprint": 0
+      },
+      "ready": {
+        "rss_current": 50937856,
+        "rss_lifetime_peak": 50937856,
+        "physical_footprint_current": 32981808,
+        "physical_footprint_lifetime_peak": 32981808,
+        "metal_allocated": 65536,
+        "compressed": 0,
+        "graphics_footprint": 16384,
+        "graphics_nofootprint": 0
+      },
+      "seed": 20260817,
+      "process_peak_rss_bytes": 875249664,
+      "process_peak_physical_footprint_bytes": 3054650952,
+      "peak_metal_resource_bytes": 2507145216,
+      "metal_device": "Apple M5 Ultra",
+      "metal_unified": true,
+      "thread_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "sampling_interval_target_us": 1000,
+      "units": "bytes; macOS ru_maxrss is bytes",
+      "notes": [
+        "Mach footprint includes charged CPU/GPU memory; Metal resource bytes overlap with that accounting.",
+        "RAM lifetime peaks are OS counters. Metal is sampled at approximately 1ms intervals.",
+        "No retained previous forecast, reference array, full-output bytes copy, or comparison temporaries.",
+        "Absolute peaks include interpreter, libraries, observer, inputs, runtime and one returned output."
+      ],
+      "library_sha256": "6ef732bc569e097c0f4ca436b4556e8f8e1040bf589ff76f5a89f5efe05ca571",
+      "source_sha256": {
+        "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+        "src/mojo/gpu_core.mojo": "7e23b4fdc75a20132786d4f34b18766bfc14f1e49061fd0eb87ef83dda34e8af",
+        "src/mojo/gpu_fft.mojo": "96855050a5acb498660f665596613ac26ea9f492fafc22110040724ecdada1f4",
+        "src/mojo/gpu_fields.mojo": "ee91ddcf001e00b9eecd1dd058b19436c959c56a7fcd9760a9665f2518b34ddb",
+        "src/mojo/gpu_model.mojo": "22ad9ff62753267c49e5b381e543d9035c3bf84e9db528ef218eadfcebbd14a6",
+        "src/mojo/gpu_noise.mojo": "8718b4724ec8951e21d54b0ae8cdf0af2f59a52c77f947e4c8419869e5f704fc",
+        "src/mojo/gpu_resident.mojo": "3a3dd026babfe9d8ed765313d66ac68aec491426737ec831e90fc62c9019ff6a",
+        "src/mojo/gpu_rng.mojo": "28210804e435bed3322a1cfa5002a8198adae0676086f4c27c8a6298123ce536",
+        "src/mojo/native_core.mojo": "faf52d35a5ae28e16178c3dc871db374394ca710344817546be5650beb66b626",
+        "src/mojo/native_fft.mojo": "fdce9a13a676e70398df28127a9602b3a702286b1ec7ab0f6223f2233f70dfef",
+        "src/mojo/native_fields.mojo": "b686b50a817dc2f64a8e79e6188f03d1d885c44b8754b208567ddb622bc0d35e",
+        "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+        "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+        "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+        "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+        "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+      },
+      "source_receipt_sha256": "b73bd8cf9061b0c9fdf6a340d3bed8d71ca9af9465d056d39ad5dd02c4a5b762"
+    },
+    "pysteps-1": {
+      "backend": "pysteps",
+      "workers": 1,
+      "members": 96,
+      "leads": 14,
+      "calls": [
+        {
+          "call": 0,
+          "cold": true,
+          "seconds": 16.544141124992166,
+          "baseline": {
+            "rss_current": 145784832,
+            "rss_lifetime_peak": 146030592,
+            "physical_footprint_current": 115753608,
+            "physical_footprint_lifetime_peak": 116032136,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 3084681216,
+            "rss_lifetime_peak": 3088629760,
+            "physical_footprint_current": 3115961104,
+            "physical_footprint_lifetime_peak": 3119909648,
+            "metal_allocated": 0,
+            "compressed": 60997632,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 14969,
+          "after_return_with_output": {
+            "rss_current": 2896445440,
+            "rss_lifetime_peak": 3088629760,
+            "physical_footprint_current": 2926906008,
+            "physical_footprint_lifetime_peak": 3119909648,
+            "metal_allocated": 0,
+            "compressed": 60293120,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 2918367232,
+            "rss_lifetime_peak": 3088629760,
+            "physical_footprint_current": 2922777216,
+            "physical_footprint_lifetime_peak": 3119909648,
+            "metal_allocated": 0,
+            "compressed": 34258944,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "08074f70039abe5c222552521c42d3641dda1a3c9b09daed10e4cf745762c9a6"
+        },
+        {
+          "call": 1,
+          "cold": false,
+          "seconds": 15.525233083986677,
+          "baseline": {
+            "rss_current": 2918367232,
+            "rss_lifetime_peak": 3088629760,
+            "physical_footprint_current": 2922777216,
+            "physical_footprint_lifetime_peak": 3119909648,
+            "metal_allocated": 0,
+            "compressed": 34258944,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 3212263424,
+            "rss_lifetime_peak": 3212263424,
+            "physical_footprint_current": 3238464344,
+            "physical_footprint_lifetime_peak": 3238464344,
+            "metal_allocated": 0,
+            "compressed": 90750976,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 13974,
+          "after_return_with_output": {
+            "rss_current": 2994225152,
+            "rss_lifetime_peak": 3212263424,
+            "physical_footprint_current": 3016362744,
+            "physical_footprint_lifetime_peak": 3238464344,
+            "metal_allocated": 0,
+            "compressed": 51937280,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 2993242112,
+            "rss_lifetime_peak": 3212263424,
+            "physical_footprint_current": 3011971808,
+            "physical_footprint_lifetime_peak": 3238464344,
+            "metal_allocated": 0,
+            "compressed": 48545792,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "08074f70039abe5c222552521c42d3641dda1a3c9b09daed10e4cf745762c9a6"
+        }
+      ],
+      "before_setup": {
+        "rss_current": 38715392,
+        "rss_lifetime_peak": 38731776,
+        "physical_footprint_current": 24674856,
+        "physical_footprint_lifetime_peak": 24773160,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "ready": {
+        "rss_current": 145784832,
+        "rss_lifetime_peak": 146030592,
+        "physical_footprint_current": 115753608,
+        "physical_footprint_lifetime_peak": 116032136,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "seed": 20260817,
+      "process_peak_rss_bytes": 3212263424,
+      "process_peak_physical_footprint_bytes": 3238464344,
+      "peak_metal_resource_bytes": 0,
+      "metal_device": "none",
+      "metal_unified": false,
+      "thread_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "sampling_interval_target_us": 1000,
+      "units": "bytes; macOS ru_maxrss is bytes",
+      "notes": [
+        "Mach footprint includes charged CPU/GPU memory; Metal resource bytes overlap with that accounting.",
+        "RAM lifetime peaks are OS counters. Metal is sampled at approximately 1ms intervals.",
+        "No retained previous forecast, reference array, full-output bytes copy, or comparison temporaries.",
+        "Absolute peaks include interpreter, libraries, observer, inputs, runtime and one returned output."
+      ],
+      "source_receipt_sha256": "c872ae1dc369d3a8841fdb103dcd205d4280d201584f484620def3509f46ce66"
+    },
+    "pysteps-16": {
+      "backend": "pysteps",
+      "workers": 16,
+      "members": 96,
+      "leads": 14,
+      "calls": [
+        {
+          "call": 0,
+          "cold": true,
+          "seconds": 15.106752499996219,
+          "baseline": {
+            "rss_current": 146325504,
+            "rss_lifetime_peak": 146522112,
+            "physical_footprint_current": 116294280,
+            "physical_footprint_lifetime_peak": 116523656,
+            "metal_allocated": 0,
+            "compressed": 0,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 3001663488,
+            "rss_lifetime_peak": 3004006400,
+            "physical_footprint_current": 2684258968,
+            "physical_footprint_lifetime_peak": 2687060632,
+            "metal_allocated": 0,
+            "compressed": 86687744,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 12395,
+          "after_return_with_output": {
+            "rss_current": 2811297792,
+            "rss_lifetime_peak": 3004006400,
+            "physical_footprint_current": 2048559936,
+            "physical_footprint_lifetime_peak": 2687060632,
+            "metal_allocated": 0,
+            "compressed": 33030144,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 2820505600,
+            "rss_lifetime_peak": 3004006400,
+            "physical_footprint_current": 2044480320,
+            "physical_footprint_lifetime_peak": 2687060632,
+            "metal_allocated": 0,
+            "compressed": 19283968,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "08074f70039abe5c222552521c42d3641dda1a3c9b09daed10e4cf745762c9a6"
+        },
+        {
+          "call": 1,
+          "cold": false,
+          "seconds": 16.03937358301482,
+          "baseline": {
+            "rss_current": 2820374528,
+            "rss_lifetime_peak": 3004006400,
+            "physical_footprint_current": 2044496704,
+            "physical_footprint_lifetime_peak": 2687060632,
+            "metal_allocated": 0,
+            "compressed": 19283968,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "peak": {
+            "rss_current": 2863890432,
+            "rss_lifetime_peak": 3004006400,
+            "physical_footprint_current": 2971929576,
+            "physical_footprint_lifetime_peak": 2971929576,
+            "metal_allocated": 0,
+            "compressed": 884948992,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "sampling_points": 12382,
+          "after_return_with_output": {
+            "rss_current": 2041348096,
+            "rss_lifetime_peak": 3004006400,
+            "physical_footprint_current": 2750106504,
+            "physical_footprint_lifetime_peak": 2971929576,
+            "metal_allocated": 0,
+            "compressed": 738410496,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "after_output_deleted_gc": {
+            "rss_current": 2113273856,
+            "rss_lifetime_peak": 3004006400,
+            "physical_footprint_current": 2745977736,
+            "physical_footprint_lifetime_peak": 2971929576,
+            "metal_allocated": 0,
+            "compressed": 662372352,
+            "graphics_footprint": 0,
+            "graphics_nofootprint": 0
+          },
+          "output_bytes": 396361728,
+          "output_sha256": "08074f70039abe5c222552521c42d3641dda1a3c9b09daed10e4cf745762c9a6"
+        }
+      ],
+      "before_setup": {
+        "rss_current": 38453248,
+        "rss_lifetime_peak": 38469632,
+        "physical_footprint_current": 24396304,
+        "physical_footprint_lifetime_peak": 24494608,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "ready": {
+        "rss_current": 146325504,
+        "rss_lifetime_peak": 146522112,
+        "physical_footprint_current": 116294280,
+        "physical_footprint_lifetime_peak": 116523656,
+        "metal_allocated": 0,
+        "compressed": 0,
+        "graphics_footprint": 0,
+        "graphics_nofootprint": 0
+      },
+      "seed": 20260817,
+      "process_peak_rss_bytes": 3004006400,
+      "process_peak_physical_footprint_bytes": 2971929576,
+      "peak_metal_resource_bytes": 0,
+      "metal_device": "none",
+      "metal_unified": false,
+      "thread_environment": {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "VECLIB_MAXIMUM_THREADS": "1"
+      },
+      "sampling_interval_target_us": 1000,
+      "units": "bytes; macOS ru_maxrss is bytes",
+      "notes": [
+        "Mach footprint includes charged CPU/GPU memory; Metal resource bytes overlap with that accounting.",
+        "RAM lifetime peaks are OS counters. Metal is sampled at approximately 1ms intervals.",
+        "No retained previous forecast, reference array, full-output bytes copy, or comparison temporaries.",
+        "Absolute peaks include interpreter, libraries, observer, inputs, runtime and one returned output."
+      ],
+      "source_receipt_sha256": "0d70e811819ae3099c001d4329dbe6230ad1f298f5b71311eb8b42b055b7c4dc"
+    }
+  },
+  "validation": {
+    "input_and_qualified_output_hashes_checked": true,
+    "full_forecast_calls": 12,
+    "known_metal_allocation_control_passed": true
+  }
+}
