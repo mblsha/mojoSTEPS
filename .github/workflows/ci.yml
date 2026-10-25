@@ -18,8 +18,11 @@ jobs:
       VECLIB_MAXIMUM_THREADS: '1'
       MPLCONFIGDIR: .build/mpl
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - name: Install OpenMP compiler for the pySTEPS reference
+        if: runner.os == 'macOS'
+        run: brew install llvm libomp
       - name: Install isolated pinned research and Mojo environments
         run: sh scripts/bootstrap.sh
       - name: Build native CPU core and probes
@@ -40,9 +43,10 @@ jobs:
         run: |
           .venv/bin/python -m build --outdir .build/dist
           .venv/bin/python scripts/check_distribution.py .build/dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
+          include-hidden-files: true
           name: cpu-evidence-${{ matrix.os }}
           path: |
             .build/ci-demo/summary.json

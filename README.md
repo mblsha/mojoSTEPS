@@ -18,7 +18,8 @@ and operational reliability require separate evaluation.
 
 Requires [uv](https://docs.astral.sh/uv/getting-started/installation/), Git,
 a C++17 compiler (Xcode Command Line Tools on macOS), and a supported Mojo host:
-Apple silicon macOS or Linux x86-64 with AVX2 / x86-64-v3. The GPU backend is
+Apple silicon macOS or Linux x86-64 with AVX2 / x86-64-v3.
+For the macOS pySTEPS reference install, run `brew install llvm libomp` first. The GPU backend is
 qualified on Apple M1 Ultra and M5 Ultra; CUDA/ROCm and Intel Macs are untested
 by this project. See [hardware and installation](docs/INSTALL.md).
 

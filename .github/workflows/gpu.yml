@@ -16,13 +16,14 @@ jobs:
       VECLIB_MAXIMUM_THREADS: '1'
       MPLCONFIGDIR: .build/mpl
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: sh scripts/bootstrap.sh
       - run: .venv/bin/python scripts/build.py --backend all
       - run: .venv/bin/python -m pytest -q
       - run: .venv/bin/python -m mojosteps demo --backend gpu --members 96 --leads 14 --compare --no-plot --no-save-arrays --output .build/gpu-check
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
+          include-hidden-files: true
           name: metal-evidence
           path: .build/gpu-check/summary.json

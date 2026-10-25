@@ -5,6 +5,13 @@ reference is Python 3.12, NumPy 2.5.1, SciPy 1.18.0 and pySTEPS 1.21.2.
 `scripts/bootstrap.sh` installs these into separate `.venv` (Python research)
 and `.build/toolchain` (compiler/SDK) environments using uv. Its explicit pins
 and `--no-config` isolate setup from machine-specific uv configuration.
+On macOS the reference package's Cython motion extensions unconditionally use
+OpenMP, including when the demo supplies motion directly. Install Homebrew
+`llvm` and `libomp` (`brew install llvm libomp`); bootstrap selects that compiler
+only for the reference Python dependencies, with arm64 flags for universal Python
+installations. Native mojoSTEPS itself does not require OpenMP. An explicit `CC`
+can select another compatible compiler.
+
 Dask 2026.8.0 enables pySTEPS worker parallelism; the native core does not use Dask.
 
 | Platform | CPU | GPU |
