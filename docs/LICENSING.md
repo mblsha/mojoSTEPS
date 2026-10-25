@@ -24,11 +24,17 @@ file hashes are recorded in `third_party/pocketfft/UPSTREAM.json`. Additional RN
 notice URLs and hashes are recorded in `third_party/PROVENANCE.json`.
 NumPy/SciPy/pySTEPS/matplotlib/Dask are installed externally, not vendored.
 
-The extracted build replaces the prototype's FFTW bridge with PocketFFT. It does
+The default build replaces the prototype's FFTW bridge with PocketFFT. It does
 not link FFTW or include its implementation. This avoids imposing FFTW's GPL
 terms on a distributed linked forecast library. All project/retained component
 license notices must travel with redistributions; the root license does not
 replace upstream copyright or license terms.
+
+The optional `scripts/benchmark_fft.py` experiment links a separately installed
+FFTW library for local comparisons. Its API adapter is project-authored source;
+FFTW itself is not vendored. FFTW's license applies to those linked benchmark
+binaries, which stay under `.build/` and are not shipped. The default build,
+Python wheel and CPU/GPU release libraries do not acquire an FFTW dependency.
 
 ## External Mojo/MAX toolchain
 

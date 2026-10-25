@@ -83,7 +83,8 @@ on finite values, and identical decisions at 10/15/20 dBZ after float32 conversi
 This is numerical agreement, not a promise of bitwise equality to pySTEPS.
 [Reproduction commands and benchmark methodology](docs/REPRODUCIBILITY.md)
 separate hosted CPU CI from real-hardware GPU checks. Public receipts use only
-the included synthetic generator. See [benchmark results](docs/BENCHMARKS.md).
+the included synthetic generator. See [benchmark results](docs/BENCHMARKS.md) and the
+[matched FFTW/PocketFFT comparison](docs/FFT_COMPARISON.md).
 
 CPU CI builds and tests on Linux and macOS. GPU CI is an opt-in manual workflow
 for an owner-provisioned Apple runner; hosted CPU success does not certify GPU

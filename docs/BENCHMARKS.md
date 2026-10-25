@@ -40,3 +40,5 @@ Reproduce using [REPRODUCIBILITY.md](REPRODUCIBILITY.md). For multicore CPU rows
 change `--workers 1` to 24 (M5 Ultra) or 16 (M1 Ultra). `workers=1` limits
 application parallelism; it does not impose process CPU affinity or a CPU quota.
 No operational radar data or results from the earlier FFTW prototype are used.
+
+For a controlled comparison of CPU FFT libraries, see the [matched FFTW/PocketFFT study](FFT_COMPARISON.md), including measured/patient plans and saved-wisdom restarts.
