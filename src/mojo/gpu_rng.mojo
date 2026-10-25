@@ -2,6 +2,7 @@
 # Copyright (c) 2026 Michael Pishchagin and mojoSTEPS contributors.
 # Adapted algorithm notices: see NOTICE and third_party/.
 """NumPy legacy MT19937/polar normals on Metal, preserving rejection order."""
+from native_config import RuntimeOptions, merge_passes
 from std.math import sqrt
 from std.memory import bitcast
 from std.memory import unsafe_stack_allocation
@@ -62,7 +63,8 @@ def uniform(a: UInt32, b: UInt32) -> D2:
     return dd_mul(dd_add(dd_mul(int_pair(a >> 5), D2(67108864, 0)), int_pair(b >> 6)), D2(1.1102230246251565e-16, 0))
 
 
-def generate_normals(states: MutPointer[UInt32, MutAnyOrigin], positions: MutPointer[Int32, MutAnyOrigin], output: MutPointer[Float32, MutAnyOrigin]):
+def generate_normals[SIZE: Int = 192](states: MutPointer[UInt32, MutAnyOrigin], positions: MutPointer[Int32, MutAnyOrigin], output: MutPointer[Float32, MutAnyOrigin]):
+    comptime PIXELS = SIZE * SIZE
     var m = block_idx.x
     var t = thread_idx.x
     var old = unsafe_stack_allocation[624, UInt32, address_space=.SHARED]()
@@ -185,7 +187,8 @@ def below_billion(state: MutPointer[UInt32, MutUntrackedOrigin], mut position: I
     return value
 
 
-def initialize_random(states: MutPointer[UInt32, MutAnyOrigin], motion_storage: MutPointer[UInt32, MutAnyOrigin], positions: MutPointer[Int32, MutAnyOrigin], params: MutPointer[Float32, MutAnyOrigin], seed: UInt32, members: Int32):
+def initialize_random[SIZE: Int = 192](states: MutPointer[UInt32, MutAnyOrigin], motion_storage: MutPointer[UInt32, MutAnyOrigin], positions: MutPointer[Int32, MutAnyOrigin], params: MutPointer[Float32, MutAnyOrigin], seed: UInt32, members: Int32):
+    comptime PIXELS = SIZE * SIZE
     # Member seeds form a serial reference-defined chain. Only this small
     # initialization is serial; subsequent normal generation is cooperative.
     var motion = motion_storage.unsafe_origin_cast[MutUntrackedOrigin]()

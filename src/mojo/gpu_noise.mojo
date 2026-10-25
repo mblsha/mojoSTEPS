@@ -3,6 +3,7 @@
 # Adapted algorithm notices: see NOTICE and third_party/.
 """Batched native GPU FFTs and cascade normalization with cached host output."""
 
+from native_config import RuntimeOptions, merge_passes
 from std.runtime import initialize_runtime
 from std.time import perf_counter_ns
 from std.math import cos, sin, sqrt
@@ -32,8 +33,9 @@ def dd_div(a: D2, b: D2) -> D2:
     return dd_add(D2(first, 0), D2(second, 0))
 
 
-def normalize_cascades(source: MutPointer[Float32, MutAnyOrigin], output: MutPointer[Float32, MutAnyOrigin]):
-    comptime INV = Float64(1) / PIXELS
+def normalize_cascades[SIZE: Int = 192](source: MutPointer[Float32, MutAnyOrigin], output: MutPointer[Float32, MutAnyOrigin]):
+    comptime PIXELS = SIZE * SIZE
+    comptime INV = Float64(1) / Float64(PIXELS)
     comptime INVERSE = D2(Float32(INV), Float32(INV - Float64(Float32(INV))))
     var field = block_idx.x
     var thread = thread_idx.x
@@ -69,11 +71,12 @@ def normalize_cascades(source: MutPointer[Float32, MutAnyOrigin], output: MutPoi
         output[2 * i + 1] = normalized[1]
 
 
-def apply_filters(
+def apply_filters[SIZE: Int = 192](
     spectrum: MutPointer[Float32, MutAnyOrigin],
     filters: MutPointer[Float32, MutAnyOrigin],
     output: MutPointer[Float32, MutAnyOrigin], total: Int32,
 ):
+    comptime PIXELS = SIZE * SIZE
     var i = global_idx.x
     if i >= Int(total):
         return
@@ -90,7 +93,10 @@ def apply_filters(
     output[4 * i + 3] = im[1]
 
 
-struct GpuNoise(Movable):
+struct GpuNoise[SIZE: Int = 192](Movable):
+    comptime N = Self.SIZE
+    comptime PIXELS = Self.SIZE * Self.SIZE
+    comptime FREQUENCIES = Self.SIZE * (Self.SIZE // 2 + 1)
     var context: DeviceContext
     var input: DeviceBuffer[DType.float32]
     var noise_row: DeviceBuffer[DType.float32]
@@ -111,44 +117,44 @@ struct GpuNoise(Movable):
         self.members = members
         self.workers = workers
         self.context = DeviceContext()
-        self.input = self.context.enqueue_create_buffer[DType.float32](4 * members * PIXELS)
-        self.noise_row = self.context.enqueue_create_buffer[DType.float32](4 * members * PIXELS)
-        self.spectrum = self.context.enqueue_create_buffer[DType.float32](4 * members * PIXELS)
-        self.frequency = self.context.enqueue_create_buffer[DType.float32](4 * members * LEVELS * PIXELS)
-        self.cascade_row = self.context.enqueue_create_buffer[DType.float32](4 * members * LEVELS * PIXELS)
-        self.cascades = self.context.enqueue_create_buffer[DType.float32](4 * members * LEVELS * PIXELS)
-        self.filters = self.context.enqueue_create_buffer[DType.float32](2 * LEVELS * PIXELS)
-        self.forward_twiddles = self.context.enqueue_create_buffer[DType.float32](4 * N)
-        self.inverse_twiddles = self.context.enqueue_create_buffer[DType.float32](4 * N)
-        self.host_input = self.context.enqueue_create_host_buffer[DType.float32](4 * members * PIXELS)
+        self.input = self.context.enqueue_create_buffer[DType.float32](4 * members * Self.PIXELS)
+        self.noise_row = self.context.enqueue_create_buffer[DType.float32](4 * members * Self.PIXELS)
+        self.spectrum = self.context.enqueue_create_buffer[DType.float32](4 * members * Self.PIXELS)
+        self.frequency = self.context.enqueue_create_buffer[DType.float32](4 * members * LEVELS * Self.PIXELS)
+        self.cascade_row = self.context.enqueue_create_buffer[DType.float32](4 * members * LEVELS * Self.PIXELS)
+        self.cascades = self.context.enqueue_create_buffer[DType.float32](4 * members * LEVELS * Self.PIXELS)
+        self.filters = self.context.enqueue_create_buffer[DType.float32](2 * LEVELS * Self.PIXELS)
+        self.forward_twiddles = self.context.enqueue_create_buffer[DType.float32](4 * Self.N)
+        self.inverse_twiddles = self.context.enqueue_create_buffer[DType.float32](4 * Self.N)
+        self.host_input = self.context.enqueue_create_host_buffer[DType.float32](4 * members * Self.PIXELS)
         var cached = F32Ptr.unsafe_dangling()
-        var bytes = 2 * members * LEVELS * PIXELS * 4
+        var bytes = 2 * members * LEVELS * Self.PIXELS * 4
         var status = external_call["posix_memalign", Int32](Pointer(to=cached), Int(16384), bytes)
         if status != 0:
             raise Error("cached GPU readback allocation failed")
         self.host_output = cached
-        self.normalized = self.context.wrap_host_memory[DType.float32](cached, 2 * members * LEVELS * PIXELS)
-        var host_filter = self.context.enqueue_create_host_buffer[DType.float32](2 * LEVELS * PIXELS)
+        self.normalized = self.context.wrap_host_memory[DType.float32](cached, 2 * members * LEVELS * Self.PIXELS)
+        var host_filter = self.context.enqueue_create_host_buffer[DType.float32](2 * LEVELS * Self.PIXELS)
         if initialize_filters:
             for level in range(LEVELS):
-                for y in range(N):
-                    for x in range(N):
+                for y in range(Self.N):
+                    for x in range(Self.N):
                         var sy = y
                         var sx = x
-                        if x > N // 2:
-                            sy = (N - y) % N
-                            sx = N - x
-                        var source = sy * (N // 2 + 1) + sx
-                        var value = noise_filter[unsafe_offset=source] * weights[unsafe_offset=level * FREQUENCIES + source]
+                        if x > Self.N // 2:
+                            sy = (Self.N - y) % Self.N
+                            sx = Self.N - x
+                        var source = sy * (Self.N // 2 + 1) + sx
+                        var value = noise_filter[unsafe_offset=source] * weights[unsafe_offset=level * Self.FREQUENCIES + source]
                         var high = Float32(value)
-                        var index = 2 * (level * PIXELS + y * N + x)
+                        var index = 2 * (level * Self.PIXELS + y * Self.N + x)
                         host_filter[index] = high
                         host_filter[index + 1] = Float32(value - Float64(high))
         self.filters.enqueue_copy_from(host_filter)
-        var forward = self.context.enqueue_create_host_buffer[DType.float32](4 * N)
-        var inverse = self.context.enqueue_create_host_buffer[DType.float32](4 * N)
-        for i in range(N):
-            var angle = -2.0 * 3.14159265358979323846 * Float64(i) / N
+        var forward = self.context.enqueue_create_host_buffer[DType.float32](4 * Self.N)
+        var inverse = self.context.enqueue_create_host_buffer[DType.float32](4 * Self.N)
+        for i in range(Self.N):
+            var angle = -2.0 * 3.14159265358979323846 * Float64(i) / Float64(Self.N)
             var r = cos(angle)
             var im = sin(angle)
             var rh = Float32(r)
@@ -177,8 +183,8 @@ struct GpuNoise(Movable):
         var start = perf_counter_ns()
         var input = self.host_input.unsafe_ptr().unsafe_origin_cast[MutUntrackedOrigin]()
         def pack(member: Int) {imm}:
-            for pixel in range(PIXELS):
-                var i = member * PIXELS + pixel
+            for pixel in range(Self.PIXELS):
+                var i = member * Self.PIXELS + pixel
                 var value = white[unsafe_offset=i]
                 var high = Float32(value)
                 input[unsafe_offset=4 * i] = high
@@ -188,20 +194,20 @@ struct GpuNoise(Movable):
         parallelize(pack, self.members, min(self.members, self.workers))
         self.input.enqueue_copy_from(self.host_input)
         var packed = perf_counter_ns()
-        self.context.enqueue_function[fft_axis](self.input, self.noise_row, self.forward_twiddles, grid_dim=self.members * N, block_dim=192)
-        self.context.enqueue_function[fft_axis](self.noise_row, self.spectrum, self.forward_twiddles, grid_dim=self.members * N, block_dim=192)
-        var total = self.members * LEVELS * PIXELS
-        self.context.enqueue_function[apply_filters](self.spectrum, self.filters, self.frequency, Int32(total), grid_dim=(total + 255) // 256, block_dim=256)
-        self.context.enqueue_function[fft_axis](self.frequency, self.cascade_row, self.inverse_twiddles, grid_dim=self.members * LEVELS * N, block_dim=192)
-        self.context.enqueue_function[fft_axis](self.cascade_row, self.cascades, self.inverse_twiddles, grid_dim=self.members * LEVELS * N, block_dim=192)
-        self.context.enqueue_function[normalize_cascades](self.cascades, self.normalized, grid_dim=self.members * LEVELS, block_dim=256)
+        self.context.enqueue_function[fft_axis[Self.SIZE]](self.input, self.noise_row, self.forward_twiddles, grid_dim=self.members * Self.N, block_dim=Self.N)
+        self.context.enqueue_function[fft_axis[Self.SIZE]](self.noise_row, self.spectrum, self.forward_twiddles, grid_dim=self.members * Self.N, block_dim=Self.N)
+        var total = self.members * LEVELS * Self.PIXELS
+        self.context.enqueue_function[apply_filters[Self.SIZE]](self.spectrum, self.filters, self.frequency, Int32(total), grid_dim=(total + 255) // 256, block_dim=256)
+        self.context.enqueue_function[fft_axis[Self.SIZE]](self.frequency, self.cascade_row, self.inverse_twiddles, grid_dim=self.members * LEVELS * Self.N, block_dim=Self.N)
+        self.context.enqueue_function[fft_axis[Self.SIZE]](self.cascade_row, self.cascades, self.inverse_twiddles, grid_dim=self.members * LEVELS * Self.N, block_dim=Self.N)
+        self.context.enqueue_function[normalize_cascades[Self.SIZE]](self.cascades, self.normalized, grid_dim=self.members * LEVELS, block_dim=256)
         self.context.synchronize()
         var executed = perf_counter_ns()
         var results = self.host_output
         def unpack(member: Int) {imm}:
             for level in range(LEVELS):
-                for pixel in range(PIXELS):
-                    var i = (member * LEVELS + level) * PIXELS + pixel
+                for pixel in range(Self.PIXELS):
+                    var i = (member * LEVELS + level) * Self.PIXELS + pixel
                     output[unsafe_offset=i] = Float64(results[unsafe_offset=2 * i]) + Float64(results[unsafe_offset=2 * i + 1])
         parallelize(unpack, self.members, min(self.members, self.workers))
         var end = perf_counter_ns()
@@ -214,8 +220,8 @@ struct GpuNoise(Movable):
 def steps_gpu_noise_probe(input: F64Ptr, velocity: F64Ptr, white: F64Ptr, output: F64Ptr, members: Int, workers: Int, runs: Int, times: F64Ptr) abi("C") -> Int32:
     try:
         initialize_runtime()
-        var model = Model(input, velocity, True)
-        var gpu = GpuNoise(data(model.noise_filter), data(model.weights), members, workers)
+        var model = Model[192](input, velocity, True)
+        var gpu = GpuNoise[192](data(model.noise_filter), data(model.weights), members, workers)
         print("GPU noise backend:", gpu.context.name())
         for run in range(runs):
             gpu.generate(white, output, times + run * 3)
@@ -230,11 +236,11 @@ def steps_gpu_noise_probe(input: F64Ptr, velocity: F64Ptr, white: F64Ptr, output
 @export
 def steps_cpu_noise_probe(input: F64Ptr, velocity: F64Ptr, white: F64Ptr, output: F64Ptr, members: Int, workers: Int, runs: Int, times: F64Ptr) abi("C") -> Int32:
     initialize_runtime()
-    var model = Model(input, velocity, True)
+    var model = Model[192](input, velocity, True)
     var filter = data(model.noise_filter)
     var weights = data(model.weights)
     def generate(member: Int) {imm}:
-        var fft = FFT()
+        var fft = FFT[192]()
         var scratch = List[Float64](length=PIXELS, fill=0)
         var means = List[Float64](length=LEVELS, fill=0)
         var deviations = List[Float64](length=LEVELS, fill=0)
@@ -243,8 +249,8 @@ def steps_cpu_noise_probe(input: F64Ptr, velocity: F64Ptr, white: F64Ptr, output
             fft.complex[2 * i] *= filter[unsafe_offset=i]
             fft.complex[2 * i + 1] *= filter[unsafe_offset=i]
         fft.inverse()
-        _ = normalize(data(fft.real), data(scratch))
-        decompose(fft, data(fft.real), weights, output + member * LEVELS * PIXELS, data(means), data(deviations))
+        _ = normalize[192](data(fft.real), data(scratch))
+        decompose[192](fft, data(fft.real), weights, output + member * LEVELS * PIXELS, data(means), data(deviations))
         _ = scratch
         _ = means
         _ = deviations

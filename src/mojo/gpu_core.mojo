@@ -7,6 +7,7 @@ No Python executes inside this forecast. The existing CPU entrypoint remains
 available and unchanged. GPU failures return an error, never a CPU fallback.
 """
 
+from native_config import TIMESTEP, PRECIP_THR, MAX_MEMBERS, MAX_LEADS, MERGE_PASSES
 from std.ffi import external_call
 from std.runtime import initialize_runtime
 from std.math import pow, isfinite
@@ -57,7 +58,7 @@ def update_member(
             field[i] = low
     probability_match(data(field), target, indices, data(matched))
     dilated_mask(data(matched), mask, indices)
-    var minutes = Float64((lead + 1) * 5)
+    var minutes = Float64(lead + 1) * Float64(TIMESTEP)
     var along = (10.88 * pow(minutes, 0.23) - 7.68) * eps_par
     var across = (5.76 * pow(minutes, 0.31) - 2.72) * eps_perp
     for i in range(PIXELS):
@@ -76,13 +77,13 @@ def steps_forecast_gpu(
     input: F64Ptr, velocity: F64Ptr, output: F64Ptr,
     members: Int, leads: Int, seed: UInt32, workers: Int, velocity_float32: Int32,
 ) abi("C") -> Int32:
-    if members < 1 or members > 96 or leads < 1 or leads > 14 or workers < 1 or velocity_float32 < 0 or velocity_float32 > 1:
+    if members < 1 or members > MAX_MEMBERS or leads < 1 or leads > MAX_LEADS or workers < 1 or velocity_float32 < 0 or velocity_float32 > 1:
         return 1
     var echoes = 0
     for i in range(3 * PIXELS):
         if not isfinite(input[unsafe_offset=i]):
             return 2
-        echoes += Int(input[unsafe_offset=i] >= 10.0)
+        echoes += Int(input[unsafe_offset=i] >= PRECIP_THR)
     for i in range(2 * PIXELS):
         if not isfinite(velocity[unsafe_offset=i]):
             return 2

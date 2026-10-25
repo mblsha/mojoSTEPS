@@ -63,3 +63,34 @@ The sdist contains native sources and vendored PocketFFT; the wheel contains the
 Python boundary only. Both carry root and third-party notices. No SDK or compiled
 native objects should appear in either artifact. CI uploads receipts/manifests,
 not native libraries.
+
+
+## Runtime grids and multi-source extension
+
+```sh
+# Source/geometry/time/quality contracts and native parity, all CPU sizes:
+.venv/bin/python -m pytest -q
+# Complete hardware matrix, including 96 x 14 x 512 x 512 forecasts:
+OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 \
+  .venv/bin/python scripts/validate_regional.py --full --workers 16 \
+  --output .build/regional-validation.json
+.venv/bin/python scripts/check_runtime_c.py --backend all
+.venv/bin/python examples/multi_source.py --backend gpu --size 256 --kmperpixel 1
+```
+
+The full validation runner defaults to CPU and real Metal; pass `--backends cpu`
+on Linux. It compares the second native output for each setting, while recording
+both initial and warm call timings. Full-output hashing/comparison is outside
+timing and uses spatial planes to keep diagnostic memory bounded. The reference
+uses the same requested worker count. Retained oracle arrays mean this runner is
+not a memory benchmark. The matrix uses one forecast engine/library per backend
+while changing runtime configurations.
+
+[Regional qualification receipts](../benchmarks/regional/) record all 18 complete
+output comparisons per host (36 total) and source/library/fixture identities.
+All native and reference output hashes match between the two Macs, including
+retained default 192-square outputs. The 71-test suite and Python-free runtime C
+caller pass on both hosts. Source-adapter tests use only synthetic fields/NetCDF.
+The four initially failing large-grid member seeds are retained as regressions.
+These are numerical checks; no new operational source or forecast-skill claim is
+qualified by them. See [regional API and boundaries](REGIONAL.md).

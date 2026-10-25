@@ -8,6 +8,7 @@ keeps approximately 48 significant bits without requiring native GPU float64.
 The CPU forecast implementation is unchanged.
 """
 
+from native_config import RuntimeOptions, merge_passes
 from std.math import cos, sin, fma
 from std.memory import unsafe_stack_allocation
 from std.runtime import initialize_runtime
@@ -62,44 +63,76 @@ def load_complex(p: MutPointer[Float32, MutAnyOrigin], i: Int) -> C4:
     return p.load[width=4](4 * i)
 
 
-def fft_axis(
+def fft_axis[SIZE: Int = 192](
     source: MutPointer[Float32, MutAnyOrigin],
     output: MutPointer[Float32, MutAnyOrigin],
     twiddles: MutPointer[Float32, MutAnyOrigin],
 ):
-    var t = thread_idx.x
-    var line = block_idx.x % N
-    var batch = block_idx.x // N
-    var group = t // 64
-    var k = t % 64
-    var reverse = 0
-    var bits = k
-    comptime for _ in range(6):
-        reverse = (reverse << 1) | (bits & 1)
-        bits >>= 1
-    var shared = unsafe_stack_allocation[192, C4, address_space=.SHARED]()
-    shared[t] = load_complex(source, batch * PIXELS + line * N + 3 * reverse + group)
-    barrier()
-    comptime for stage in range(6):
-        comptime half = 1 << stage
-        var base = group * 64 + (k // (2 * half)) * (2 * half)
-        var j = k % half
-        var a = shared[base + j]
-        var b = complex_mul(shared[base + j + half], load_complex(twiddles, j * (192 // (2 * half))))
-        var value = complex_add(a, b if k % (2 * half) < half else -b)
+    comptime N = SIZE
+    comptime PIXELS = SIZE * SIZE
+    comptime if N == 192:
+        var t = thread_idx.x
+        var line = block_idx.x % N
+        var batch = block_idx.x // N
+        var group = t // 64
+        var k = t % 64
+        var reverse = 0
+        var bits = k
+        comptime for _ in range(6):
+            reverse = (reverse << 1) | (bits & 1)
+            bits >>= 1
+        var shared = unsafe_stack_allocation[N, C4, address_space=.SHARED]()
+        shared[t] = load_complex(source, batch * PIXELS + line * N + 3 * reverse + group)
         barrier()
-        shared[t] = value
+        comptime for stage in range(6):
+            comptime half = 1 << stage
+            var base = group * 64 + (k // (2 * half)) * (2 * half)
+            var j = k % half
+            var a = shared[base + j]
+            var b = complex_mul(shared[base + j + half], load_complex(twiddles, j * (192 // (2 * half))))
+            var value = complex_add(a, b if k % (2 * half) < half else -b)
+            barrier()
+            shared[t] = value
+            barrier()
+        var a = shared[t % 64]
+        var b = complex_mul(shared[64 + t % 64], load_complex(twiddles, t))
+        var c = complex_mul(shared[128 + t % 64], load_complex(twiddles, (2 * t) % 192))
+        var result = complex_add(complex_add(a, b), c)
+        var index = 4 * (batch * PIXELS + t * N + line)
+        comptime for component in range(4):
+            output[index + component] = result[component]
+    else:
+        var t = thread_idx.x
+        var line = block_idx.x % N
+        var batch = block_idx.x // N
+        var reverse = 0
+        var bits = t
+        var width = N
+        while width > 1:
+            reverse = (reverse << 1) | (bits & 1)
+            bits >>= 1
+            width >>= 1
+        var shared = unsafe_stack_allocation[N, C4, address_space=.SHARED]()
+        shared[t] = load_complex(source, batch * PIXELS + line * N + reverse)
         barrier()
-    var a = shared[t % 64]
-    var b = complex_mul(shared[64 + t % 64], load_complex(twiddles, t))
-    var c = complex_mul(shared[128 + t % 64], load_complex(twiddles, (2 * t) % 192))
-    var result = complex_add(complex_add(a, b), c)
-    var index = 4 * (batch * PIXELS + t * N + line)
-    comptime for component in range(4):
-        output[index + component] = result[component]
+        var half = 1
+        while half < N:
+            var base = (t // (2 * half)) * (2 * half)
+            var j = t % half
+            var a = shared[base + j]
+            var b = complex_mul(shared[base + j + half], load_complex(twiddles, j * (N // (2 * half))))
+            var value = complex_add(a, b if t % (2 * half) < half else -b)
+            barrier()
+            shared[t] = value
+            barrier()
+            half *= 2
+        var result = shared[t]
+        comptime for component in range(4):
+            output[4 * (batch * PIXELS + t * N + line) + component] = result[component]
 
 
-def inspect_arithmetic(source: MutPointer[Float32, MutAnyOrigin], output: MutPointer[Float32, MutAnyOrigin], twiddles: MutPointer[Float32, MutAnyOrigin], mode: Int32):
+def inspect_arithmetic[SIZE: Int = 192](source: MutPointer[Float32, MutAnyOrigin], output: MutPointer[Float32, MutAnyOrigin], twiddles: MutPointer[Float32, MutAnyOrigin], mode: Int32):
+    comptime N = SIZE
     var t = thread_idx.x
     var index = block_idx.x * N + t
     if mode == 8:
@@ -113,7 +146,7 @@ def inspect_arithmetic(source: MutPointer[Float32, MutAnyOrigin], output: MutPoi
     elif mode == 5:
         value = complex_mul(a, load_complex(twiddles, 0))
     elif mode == 6:
-        var shared = unsafe_stack_allocation[192, C4, address_space=.SHARED]()
+        var shared = unsafe_stack_allocation[N, C4, address_space=.SHARED]()
         shared[t] = a
         barrier()
         value = shared[t]
@@ -123,7 +156,9 @@ def inspect_arithmetic(source: MutPointer[Float32, MutAnyOrigin], output: MutPoi
         output[4 * index + i] = value[i]
 
 
-struct GpuFFT(Movable):
+struct GpuFFT[SIZE: Int = 192](Movable):
+    comptime N = Self.SIZE
+    comptime PIXELS = Self.SIZE * Self.SIZE
     var context: DeviceContext
     var first: DeviceBuffer[DType.float32]
     var second: DeviceBuffer[DType.float32]
@@ -133,12 +168,12 @@ struct GpuFFT(Movable):
     def __init__(out self, batches: Int, inverse: Bool = False) raises:
         self.context = DeviceContext()
         self.batches = batches
-        self.first = self.context.enqueue_create_buffer[DType.float32](4 * PIXELS * batches)
-        self.second = self.context.enqueue_create_buffer[DType.float32](4 * PIXELS * batches)
-        self.twiddles = self.context.enqueue_create_buffer[DType.float32](4 * N)
+        self.first = self.context.enqueue_create_buffer[DType.float32](4 * Self.PIXELS * batches)
+        self.second = self.context.enqueue_create_buffer[DType.float32](4 * Self.PIXELS * batches)
+        self.twiddles = self.context.enqueue_create_buffer[DType.float32](4 * Self.N)
         with self.twiddles.map_to_host() as table:
-            for k in range(N):
-                var angle = -2.0 * 3.14159265358979323846 * Float64(k) / N
+            for k in range(Self.N):
+                var angle = -2.0 * 3.14159265358979323846 * Float64(k) / Float64(Self.N)
                 if inverse:
                     angle = -angle
                 var r = cos(angle)
@@ -152,7 +187,7 @@ struct GpuFFT(Movable):
 
     def upload(mut self, source: F64Ptr) raises:
         with self.first.map_to_host() as target:
-            for i in range(self.batches * PIXELS):
+            for i in range(self.batches * Self.PIXELS):
                 var r = source[unsafe_offset=2 * i]
                 var im = source[unsafe_offset=2 * i + 1]
                 var rh = Float32(r)
@@ -163,14 +198,14 @@ struct GpuFFT(Movable):
                 target[4 * i + 3] = Float32(im - Float64(ih))
 
     def execute(mut self) raises:
-        self.context.enqueue_function[fft_axis](self.first, self.second, self.twiddles, grid_dim=self.batches * N, block_dim=192)
-        self.context.enqueue_function[fft_axis](self.second, self.first, self.twiddles, grid_dim=self.batches * N, block_dim=192)
+        self.context.enqueue_function[fft_axis[Self.SIZE]](self.first, self.second, self.twiddles, grid_dim=self.batches * Self.N, block_dim=Self.N)
+        self.context.enqueue_function[fft_axis[Self.SIZE]](self.second, self.first, self.twiddles, grid_dim=self.batches * Self.N, block_dim=Self.N)
 
     def download(mut self, output: F64Ptr, inverse: Bool = False) raises:
         self.context.synchronize()
-        var scale = Float64(PIXELS) if inverse else 1.0
+        var scale = Float64(Self.PIXELS) if inverse else 1.0
         with self.first.map_to_host() as result:
-            for i in range(self.batches * PIXELS):
+            for i in range(self.batches * Self.PIXELS):
                 output[unsafe_offset=2 * i] = (Float64(result[4 * i]) + Float64(result[4 * i + 1])) / scale
                 output[unsafe_offset=2 * i + 1] = (Float64(result[4 * i + 2]) + Float64(result[4 * i + 3])) / scale
 
@@ -179,7 +214,7 @@ struct GpuFFT(Movable):
 def steps_gpu_fft_probe(source: F64Ptr, output: F64Ptr, batches: Int, inverse: Int32) abi("C") -> Int32:
     try:
         initialize_runtime()
-        var fft = GpuFFT(batches, inverse != 0)
+        var fft = GpuFFT[192](batches, inverse != 0)
         fft.upload(source)
         fft.execute()
         fft.download(output, inverse != 0)
@@ -194,13 +229,13 @@ def steps_gpu_fft_probe(source: F64Ptr, output: F64Ptr, batches: Int, inverse: I
 def steps_gpu_fft_stage_probe(source: F64Ptr, output: F64Ptr, stage: Int32) abi("C") -> Int32:
     try:
         initialize_runtime()
-        var fft = GpuFFT(1)
+        var fft = GpuFFT[192](1)
         fft.upload(source)
         if stage == 1 or stage >= 3:
             if stage == 1:
-                fft.context.enqueue_function[fft_axis](fft.first, fft.second, fft.twiddles, grid_dim=N, block_dim=192)
+                fft.context.enqueue_function[fft_axis[192]](fft.first, fft.second, fft.twiddles, grid_dim=N, block_dim=N)
             else:
-                fft.context.enqueue_function[inspect_arithmetic](fft.first, fft.second, fft.twiddles, stage, grid_dim=N, block_dim=192)
+                fft.context.enqueue_function[inspect_arithmetic[192]](fft.first, fft.second, fft.twiddles, stage, grid_dim=N, block_dim=N)
             fft.context.synchronize()
             with fft.second.map_to_host() as result:
                 for i in range(PIXELS):
