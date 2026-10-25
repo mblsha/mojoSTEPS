@@ -1,0 +1,13 @@
+[
+  {
+    "device" : "Apple M1 Ultra",
+    "counter_sets" : [
+      {
+        "name" : "timestamp",
+        "counters" : [
+          "GPUTimestamp"
+        ]
+      }
+    ]
+  }
+]

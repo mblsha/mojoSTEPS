@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Faster Metal FFT butterflies, merge-path CDF sorting and per-member cutoffs;
+  complete outputs retain the merged GPU hashes on M1/M5 Ultra. Reproducible
+  interleaved benchmarks and opt-in GPU stage profiling.
+
 - Runtime configurable size, resolution, scan interval, thresholds and bounds,
   using genuine Mojo generic CPU/Metal kernels in one library (64–512 square).
 - Runtime C ABI plus retained legacy entrypoints; generic radix-2 Metal FFTs.

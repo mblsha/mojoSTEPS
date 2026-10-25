@@ -86,13 +86,21 @@ def fft_axis[SIZE: Int = 192](
         barrier()
         comptime for stage in range(6):
             comptime half = 1 << stage
-            var base = group * 64 + (k // (2 * half)) * (2 * half)
+            # One lane computes both butterfly outputs, sharing the expensive
+            # paired-float complex product instead of repeating it twice.
+            var base = group * 64 + (k // half) * (2 * half)
             var j = k % half
-            var a = shared[base + j]
-            var b = complex_mul(shared[base + j + half], load_complex(twiddles, j * (192 // (2 * half))))
-            var value = complex_add(a, b if k % (2 * half) < half else -b)
+            var upper = C4(0)
+            var lower = C4(0)
+            if k < 32:
+                var a = shared[base + j]
+                var b = complex_mul(shared[base + j + half], load_complex(twiddles, j * (192 // (2 * half))))
+                upper = complex_add(a, b)
+                lower = complex_add(a, -b)
             barrier()
-            shared[t] = value
+            if k < 32:
+                shared[base + j] = upper
+                shared[base + j + half] = lower
             barrier()
         var a = shared[t % 64]
         var b = complex_mul(shared[64 + t % 64], load_complex(twiddles, t))
@@ -117,13 +125,19 @@ def fft_axis[SIZE: Int = 192](
         barrier()
         var half = 1
         while half < N:
-            var base = (t // (2 * half)) * (2 * half)
+            var base = (t // half) * (2 * half)
             var j = t % half
-            var a = shared[base + j]
-            var b = complex_mul(shared[base + j + half], load_complex(twiddles, j * (N // (2 * half))))
-            var value = complex_add(a, b if t % (2 * half) < half else -b)
+            var upper = C4(0)
+            var lower = C4(0)
+            if t < N // 2:
+                var a = shared[base + j]
+                var b = complex_mul(shared[base + j + half], load_complex(twiddles, j * (N // (2 * half))))
+                upper = complex_add(a, b)
+                lower = complex_add(a, -b)
             barrier()
-            shared[t] = value
+            if t < N // 2:
+                shared[base + j] = upper
+                shared[base + j + half] = lower
             barrier()
             half *= 2
         var result = shared[t]

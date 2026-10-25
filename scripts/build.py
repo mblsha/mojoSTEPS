@@ -5,7 +5,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def build(backend):
+def build(backend, profile=False):
+    if profile and backend != "gpu":
+        raise SystemExit("--profile requires --backend gpu")
     output=ROOT/'.build'
     output.mkdir(exist_ok=True)
     mojo=os.environ.get('MOJO_BIN') or str(output/'toolchain/bin/mojo')
@@ -27,8 +29,10 @@ def build(backend):
     for name,source in targets:
         if name=='gpu' and (platform.system()!='Darwin' or platform.machine()!='arm64'):
             raise SystemExit('The GPU backend is qualified only on Apple silicon macOS. Use --backend cpu.')
-        library=output/f'libmojosteps_{name}.{suffix}'
+        library=output/f'libmojosteps_{name}{"_profile" if profile else ""}.{suffix}'
         cmd=[mojo,'build','--emit','shared-lib','--fp-mode','contract=off','-Xlinker',str(cpp),'-Xlinker',('-lc++' if platform.system()=='Darwin' else '-lstdc++'),str(ROOT/'src/mojo'/f'{source}.mojo'),'-o',str(library)]
+        if profile:
+            cmd[2:2]=['-D','STEPS_GPU_PROFILE=1']
         subprocess.run(cmd,check=True)
         manifest={'library':library.name,'sha256':hashlib.sha256(library.read_bytes()).hexdigest(),'source_sha256':sources,'abi':2,'supported_sizes':[64,128,192,256,512],'fft':'PocketFFT (vendored BSD-3-Clause)','command':[str(Path(arg).relative_to(ROOT)) if arg.startswith(str(ROOT)+'/') else arg for arg in cmd],'mojo_version':subprocess.check_output([mojo,'--version'],text=True).strip()}
         library.with_suffix('.manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
@@ -37,4 +41,6 @@ def build(backend):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--backend',choices=['cpu','gpu','all'],default='cpu')
-    build(p.parse_args().backend)
+    p.add_argument("--profile", action="store_true", help="GPU stage timings with synchronization; writes a separate profiling library")
+    args=p.parse_args()
+    build(args.backend, args.profile)

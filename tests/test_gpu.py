@@ -45,3 +45,31 @@ def test_gpu_cdf_and_mask(case):
     kernel=iterate_structure(generate_binary_structure(2,1),4)
     expected=compute_dilated_mask(field>=10,kernel,10)
     np.testing.assert_allclose(actual[1],expected,atol=1e-13,rtol=0,equal_nan=True)
+
+
+@pytest.mark.parametrize("size", [64, 128, 192, 256, 512])
+@pytest.mark.parametrize("case", ["random", "tied", "low_components"])
+def test_gpu_merge_path_order(size, case):
+    """Check rank/index ordering across tiles, partial merges and members."""
+    rng = np.random.RandomState(410)
+    if case == "random":
+        fields = rng.normal(size=(2, size, size))
+    elif case == "tied":
+        fields = rng.randint(-5, 6, size=(2, size, size)).astype(np.float64)
+    else:
+        # Every key has the same float32 high component. The paired-float low
+        # component, followed by original pixel index, must determine rank.
+        fields = 1.0 + rng.randint(-100, 101, size=(2, size, size)) * 2.0**-40
+    fields = np.ascontiguousarray(fields)
+    actual = np.empty((2, 2, size, size))
+    probe = Forecast("gpu")._library.steps_gpu_sort_probe
+    probe.argtypes = [PTR, PTR, ctypes.c_ssize_t, ctypes.c_ssize_t]
+    probe.restype = ctypes.c_int32
+    assert probe(address(fields), address(actual), size, 2) == 0
+    for member in range(2):
+        values = fields[member].ravel()
+        order = np.lexsort((np.arange(size * size), values))
+        hi = values.astype(np.float32).astype(np.float64)
+        packed = hi + (values - hi).astype(np.float32).astype(np.float64)
+        np.testing.assert_array_equal(actual[0, member].ravel(), packed[order])
+        np.testing.assert_array_equal(actual[1, member].ravel(), order)

@@ -44,3 +44,7 @@ No operational radar data or results from the earlier FFTW prototype are used.
 For a controlled comparison of CPU FFT libraries, see the [matched FFTW/PocketFFT study](FFT_COMPARISON.md), including measured/patient plans and saved-wisdom restarts.
 
 The [RAM and Metal resource measurements](MEMORY.md) compare the CPU/GPU cores with pySTEPS using the same full forecast.
+
+The newer [GPU optimization study](GPU_OPTIMIZATION.md) compares merged main with
+optimized FFT/sorting/CDF kernels at 192 and 512 square using interleaved calls.
+The historical measurements above remain unchanged.
