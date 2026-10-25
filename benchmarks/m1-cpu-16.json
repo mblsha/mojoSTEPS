@@ -1,0 +1,91 @@
+{
+  "version": "0.1.0",
+  "backend": "cpu",
+  "fixture": "rain_cells_v1",
+  "synthetic_seed": 2468,
+  "members": 96,
+  "workers": 16,
+  "seed": 20260817,
+  "leads": 14,
+  "velocity_dtype": "float32",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "native_cold_seconds": 0.628381749993423,
+  "native_warm_seconds": [
+    0.6221866250052699,
+    0.6208547920032288,
+    0.6183736660022987,
+    0.6217512500006706,
+    0.6188874169965857
+  ],
+  "native_median_seconds": 0.6208547920032288,
+  "output_sha256": "63f251466fe5d6b8652d70c98ec02391dea9aca823fbb85b30fff1f08dda6c81",
+  "input_sha256": {
+    "history": "e39946098ba47a897fe83b44b797b8d5b4ae40435eb211814da9737f2f2d8aee",
+    "velocity": "09f240abdccb7ec9a5f2bd981b84b4a11ad569f1c508791a0c2ebb10f717bc97"
+  },
+  "library_sha256": "786722929bec1265af346887d24b9b8a56b7c508e1ce1b8d079547f2a7c1faf4",
+  "versions": {
+    "numpy": "2.5.1",
+    "scipy": "1.18.0",
+    "pysteps": "1.21.2"
+  },
+  "thread_environment": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "VECLIB_MAXIMUM_THREADS": "1"
+  },
+  "source_sha256": {
+    "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+    "src/mojo/gpu_core.mojo": "7e23b4fdc75a20132786d4f34b18766bfc14f1e49061fd0eb87ef83dda34e8af",
+    "src/mojo/gpu_fft.mojo": "96855050a5acb498660f665596613ac26ea9f492fafc22110040724ecdada1f4",
+    "src/mojo/gpu_fields.mojo": "ee91ddcf001e00b9eecd1dd058b19436c959c56a7fcd9760a9665f2518b34ddb",
+    "src/mojo/gpu_model.mojo": "22ad9ff62753267c49e5b381e543d9035c3bf84e9db528ef218eadfcebbd14a6",
+    "src/mojo/gpu_noise.mojo": "8718b4724ec8951e21d54b0ae8cdf0af2f59a52c77f947e4c8419869e5f704fc",
+    "src/mojo/gpu_resident.mojo": "3a3dd026babfe9d8ed765313d66ac68aec491426737ec831e90fc62c9019ff6a",
+    "src/mojo/gpu_rng.mojo": "28210804e435bed3322a1cfa5002a8198adae0676086f4c27c8a6298123ce536",
+    "src/mojo/native_core.mojo": "faf52d35a5ae28e16178c3dc871db374394ca710344817546be5650beb66b626",
+    "src/mojo/native_fft.mojo": "fdce9a13a676e70398df28127a9602b3a702286b1ec7ab0f6223f2233f70dfef",
+    "src/mojo/native_fields.mojo": "b686b50a817dc2f64a8e79e6188f03d1d885c44b8754b208567ddb622bc0d35e",
+    "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+    "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+    "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+    "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+    "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+  },
+  "mojo_version": "Mojo 1.2.0 (2016d0cd)",
+  "reference_cold_seconds": 7.802943665999919,
+  "reference_warm_seconds": [
+    6.690936250000959
+  ],
+  "reference_median_seconds": 6.690936250000959,
+  "speedup": 10.776974481282835,
+  "reference_sha256": "08074f70039abe5c222552521c42d3641dda1a3c9b09daed10e4cf745762c9a6",
+  "comparison": {
+    "shape": [
+      96,
+      14,
+      192,
+      192
+    ],
+    "values": 49545216,
+    "finite_masks_identical": true,
+    "max_absolute_error_dbz": 2.273228716376252e-09,
+    "mean_absolute_error_dbz": 2.930299815601496e-12,
+    "float32_arrays_identical": false,
+    "threshold_state_differences": {
+      "10.0": 0,
+      "15.0": 0,
+      "20.0": 0
+    },
+    "accepted": true
+  },
+  "measured_date": "2026-10-25",
+  "hardware": {
+    "processor": "Apple M1 Ultra",
+    "physical_cpu_cores": 20,
+    "memory_gib": 128
+  },
+  "max_sdk_version": "26.7.0",
+  "timing_method": "One cold call then five warm native calls; one cold plus one warm reference call. Native and reference run as separate blocks; no core affinity."
+}

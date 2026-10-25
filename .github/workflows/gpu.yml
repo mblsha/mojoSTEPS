@@ -1,0 +1,28 @@
+name: Manual Apple GPU research checks
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metal:
+    # An owner-provisioned runner; never execute untrusted PR code on this host.
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, macOS, ARM64, mojosteps-gpu]
+    timeout-minutes: 30
+    env:
+      MOJOSTEPS_TEST_GPU: '1'
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      VECLIB_MAXIMUM_THREADS: '1'
+      MPLCONFIGDIR: .build/mpl
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh scripts/bootstrap.sh
+      - run: .venv/bin/python scripts/build.py --backend all
+      - run: .venv/bin/python -m pytest -q
+      - run: .venv/bin/python -m mojosteps demo --backend gpu --members 96 --leads 14 --compare --no-plot --no-save-arrays --output .build/gpu-check
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: metal-evidence
+          path: .build/gpu-check/summary.json

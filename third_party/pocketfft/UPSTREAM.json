@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/mreineck/pocketfft",
+  "branch": "cpp",
+  "commit": "4d865cba24359b05b37da4e75aee24498c3b78e7",
+  "files_sha256": {
+    "pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d",
+    "LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056"
+  }
+}

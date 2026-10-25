@@ -1,0 +1,28 @@
+mojoSTEPS — standalone Mojo/MAX STEPS research implementation
+Copyright (c) 2026 Michael Pishchagin and mojoSTEPS contributors.
+Project-authored source is licensed under BSD-3-Clause (LICENSE).
+
+This is an independent port of a fixed pySTEPS 1.21.2 configuration. It follows
+and adapts the STEPS implementation, Gaussian cascades, nonparametric noise,
+AR(2), incremental masks, empirical CDF matching and BPS velocity perturbations.
+Copyright (c) 2019 PySteps developers. Retained license: third_party/LICENSE.pysteps.
+Upstream: https://github.com/pySTEPS/pysteps
+
+The native CPU/GPU RNG implementations adapt NumPy RandomState / RandomKit
+MT19937, uniform conversion, bounded-integer rejection, polar normals and
+Laplace draws. Credits include NumPy developers, Jean-Sebastien Roy, Makoto
+Matsumoto, Takuji Nishimura, Richard J. Wagner, Magnus Jonsson, Isaku Wada and
+Kevin Sheppard. Retained notices: third_party/LICENSE.numpy,
+third_party/LICENSE.randomkit and third_party/LICENSE.numpy-random.
+Upstream: https://github.com/numpy/numpy/tree/main/numpy/random
+
+PocketFFT is vendored unmodified under BSD-3-Clause. Its authors' copyright
+notices and license are in third_party/pocketfft/LICENSE.md and the header.
+Exact upstream commit and hashes: third_party/pocketfft/UPSTREAM.json.
+
+Mojo/MAX is an external, separately licensed toolchain/runtime, not vendored
+or redistributed in this source release. Project kernels call its public APIs.
+No Modular SDK implementation source or runtime binaries are included.
+See docs/LICENSING.md for dependency boundaries and binary distribution notes.
+
+No endorsement by pySTEPS, NumPy, PocketFFT or Modular is implied.

@@ -1,0 +1,32 @@
+{
+  "measured_date": "2026-10-25",
+  "suite_command": "MOJOSTEPS_TEST_GPU=1 .venv/bin/python -m pytest -q",
+  "real_hardware": {
+    "Apple M5 Ultra": {
+      "passed": 35,
+      "skipped": 0
+    },
+    "Apple M1 Ultra": {
+      "passed": 35,
+      "skipped": 0
+    }
+  },
+  "c_launcher": {
+    "Apple M5 Ultra": {
+      "cpu_output_bytes_match_python": true,
+      "gpu_output_bytes_match_python": true
+    }
+  },
+  "source_only_archives_checked": true,
+  "full_synthetic_forecasts": {
+    "values_per_forecast": 49545216,
+    "all_six_comparisons_accepted": true,
+    "cpu_worker_and_cross_host_bytes_identical": true,
+    "gpu_cross_host_bytes_identical": true
+  },
+  "notes": [
+    "Empty-mask reference emits the expected divide-by-zero/invalid warning.",
+    "GPU CI requires an owner-provisioned runner; these are manual real-hardware checks.",
+    "Final input-validation edits were checked with the focused invalid-input tests on both hosts."
+  ]
+}

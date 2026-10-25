@@ -1,0 +1,12 @@
+{
+  "LICENSE.randomkit": {
+    "url": "https://raw.githubusercontent.com/numpy/numpy/main/numpy/random/src/mt19937/randomkit.c",
+    "retrieved": "2026-10-25",
+    "sha256": "7c47320d9eaf9c23ca491d8dbe4edb2b3d886c82329f114592e7ae7e477f7abd"
+  },
+  "LICENSE.numpy-random": {
+    "url": "https://raw.githubusercontent.com/numpy/numpy/main/numpy/random/LICENSE.md",
+    "retrieved": "2026-10-25",
+    "sha256": "103166b62b80443afb9eb3488e052ea06be0cff566b908f199e561fde49af19f"
+  }
+}

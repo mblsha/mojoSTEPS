@@ -1,0 +1,49 @@
+name: CPU research checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  cpu:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      VECLIB_MAXIMUM_THREADS: '1'
+      MPLCONFIGDIR: .build/mpl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install isolated pinned research and Mojo environments
+        run: sh scripts/bootstrap.sh
+      - name: Build native CPU core and probes
+        run: .venv/bin/python scripts/build.py --backend cpu
+      - name: Reference parity, RNG, FFT and API checks
+        run: .venv/bin/python -m pytest -q
+      - name: Synthetic demo
+        run: .venv/bin/python -m mojosteps demo --compare --no-plot --output .build/ci-demo
+      - name: Prove C caller matches Python boundary
+        shell: bash
+        run: |
+          extra=()
+          if [[ "$RUNNER_OS" == Linux ]]; then extra=(-ldl); suffix=so; else suffix=dylib; fi
+          cc -O2 examples/forecast.c -o .build/forecast-c "${extra[@]}"
+          .build/forecast-c "$PWD/.build/libmojosteps_cpu.$suffix" cpu .build/ci-demo/input.f64 .build/ci-demo/c-output.f64 4 3 1
+          .venv/bin/python scripts/check_c_output.py .build/ci-demo
+      - name: Build and inspect source distributions
+        run: |
+          .venv/bin/python -m build --outdir .build/dist
+          .venv/bin/python scripts/check_distribution.py .build/dist
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-evidence-${{ matrix.os }}
+          path: |
+            .build/ci-demo/summary.json
+            .build/*.manifest.json

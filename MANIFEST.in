@@ -1,0 +1,11 @@
+include LICENSE NOTICE README.md CITATION.cff CHANGELOG.md CONTRIBUTING.md
+recursive-include src *.mojo *.cpp
+recursive-include include *.h
+recursive-include scripts *.py *.sh
+recursive-include examples *.c
+recursive-include tests *.py
+recursive-include docs *.md *.png
+recursive-include benchmarks *.json
+recursive-include third_party *
+prune .build
+prune .venv

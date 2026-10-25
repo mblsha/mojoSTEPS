@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "Please cite this software and the pySTEPS paper when using this research port."
+title: "mojoSTEPS: a standalone Mojo/MAX port of a fixed pySTEPS STEPS nowcast"
+authors:
+  - family-names: Pishchagin
+    given-names: Michael
+version: 0.1.0
+date-released: 2026-10-25
+license: BSD-3-Clause
+repository-code: "https://github.com/mblsha/mojoSTEPS"
+url: "https://github.com/mblsha/mojoSTEPS"
+keywords:
+  - precipitation nowcasting
+  - STEPS
+  - Mojo
+  - GPU
+references:
+  - type: article
+    title: "pysteps: an open-source Python library for probabilistic precipitation nowcasting (v1.0)"
+    authors:
+      - family-names: Pulkkinen
+        given-names: Seppo
+      - family-names: Nerini
+        given-names: Daniele
+      - family-names: Pérez Hortal
+        given-names: Alan
+      - family-names: Velasco-Forero
+        given-names: Carlos
+      - family-names: Seed
+        given-names: Alan
+      - family-names: Germann
+        given-names: Urs
+      - family-names: Foresti
+        given-names: Loris
+    year: 2019
+    journal: Geoscientific Model Development
+    volume: 12
+    start: 4185
+    end: 4219
+    doi: 10.5194/gmd-12-4185-2019
