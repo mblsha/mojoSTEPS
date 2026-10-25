@@ -1,0 +1,230 @@
+{
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "host": "koubou1.local",
+  "revision": null,
+  "libraries": {
+    "baseline": {
+      "name": "baseline.dylib",
+      "sha256": "e6bf1f6fbe51db91dbffd37fc1586b0d1a61d66bc6315f7485cf4f60198a8a38",
+      "manifest": {
+        "library": "libmojosteps_gpu.dylib",
+        "sha256": "e6bf1f6fbe51db91dbffd37fc1586b0d1a61d66bc6315f7485cf4f60198a8a38",
+        "source_sha256": {
+          "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+          "src/mojo/gpu_core.mojo": "793d564c8e9eeca8611d426715b4892ec89bf3d152e77e2819276fa7d3b05c2d",
+          "src/mojo/gpu_fft.mojo": "9371959b9518e96125c915c1533c845c487d5aace510e01c7d00d0b844da5471",
+          "src/mojo/gpu_fields.mojo": "56adf0fc43975eea16348b1e4607f4b378f2e3fb29a2aa36a10e25df96620a73",
+          "src/mojo/gpu_model.mojo": "e341b0d4299194052572800b08b225eecfcf28e2adc045773a78ef6e8d488d28",
+          "src/mojo/gpu_noise.mojo": "b181b0ed96d62d2fc33ac6c602921aabe880dab0c13c0f0c773f7f526df6f30e",
+          "src/mojo/gpu_resident.mojo": "bb34ea9e21b041ed9fb5ea1319004262d95518653d6134e636e38dc63d8ea249",
+          "src/mojo/gpu_rng.mojo": "2e859375720f6d2cafdeec4e462b2686df63150043534ac0afa0ffb32f41b6c4",
+          "src/mojo/native_config.mojo": "73057105248a6058638995e59fe83e7952627fcec9d1bed9e53412e9efcdc082",
+          "src/mojo/native_core.mojo": "77f70216b1754dca5ca3c30229835c6cfca091b01ea5a8a863979c2afce3ff95",
+          "src/mojo/native_fft.mojo": "ed56e8879173a22d7fb8f086e6e653deb4ef8b38a7f28d5f733d1822f547bb30",
+          "src/mojo/native_fields.mojo": "50064254aa8abf1a995fbbb0eef3a7269597ad5420a68053766fdcd56a2cec8f",
+          "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+          "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+          "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+          "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+          "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+        },
+        "abi": 2,
+        "supported_sizes": [
+          64,
+          128,
+          192,
+          256,
+          512
+        ],
+        "fft": "PocketFFT (vendored BSD-3-Clause)",
+        "command": [
+          ".build/toolchain/bin/mojo",
+          "build",
+          "--emit",
+          "shared-lib",
+          "--fp-mode",
+          "contract=off",
+          "-Xlinker",
+          ".build/fft_bridge.o",
+          "-Xlinker",
+          "-lc++",
+          "src/mojo/gpu_resident.mojo",
+          "-o",
+          ".build/libmojosteps_gpu.dylib"
+        ],
+        "mojo_version": "Mojo 1.2.0 (2016d0cd)",
+        "original_sha256": "91892ee6683625f4d517698c3a612d42af4be3148efefc51758591f0fefd3450",
+        "benchmark_copy_note": "Original code; unique dylib install name and ad-hoc signature."
+      }
+    },
+    "candidate": {
+      "name": "libmojosteps_gpu.dylib",
+      "sha256": "c361daa9534e609f97783cde6d1c591ccd68747e4f7eeaec27a775d82bb61c89",
+      "manifest": {
+        "library": "libmojosteps_gpu.dylib",
+        "sha256": "c361daa9534e609f97783cde6d1c591ccd68747e4f7eeaec27a775d82bb61c89",
+        "source_sha256": {
+          "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+          "src/mojo/gpu_core.mojo": "793d564c8e9eeca8611d426715b4892ec89bf3d152e77e2819276fa7d3b05c2d",
+          "src/mojo/gpu_fft.mojo": "b1bcc74f29dec92d03f8498dc0ddfb9f44b2d38300472ee50f4d71125829c95e",
+          "src/mojo/gpu_fields.mojo": "59a97207d5e5cd09aee1e63bc05e072f17f43d29eb3985aadb837df6159fef9f",
+          "src/mojo/gpu_model.mojo": "e341b0d4299194052572800b08b225eecfcf28e2adc045773a78ef6e8d488d28",
+          "src/mojo/gpu_noise.mojo": "b181b0ed96d62d2fc33ac6c602921aabe880dab0c13c0f0c773f7f526df6f30e",
+          "src/mojo/gpu_profile.mojo": "02d0a0453d39115a0b34c3f34a04e2438a00200c17caf85e96a86040934f3dbd",
+          "src/mojo/gpu_resident.mojo": "275010e331960e2963968145fb4dc755d015974770387c0a22223d9438c114c8",
+          "src/mojo/gpu_rng.mojo": "2e859375720f6d2cafdeec4e462b2686df63150043534ac0afa0ffb32f41b6c4",
+          "src/mojo/native_config.mojo": "73057105248a6058638995e59fe83e7952627fcec9d1bed9e53412e9efcdc082",
+          "src/mojo/native_core.mojo": "77f70216b1754dca5ca3c30229835c6cfca091b01ea5a8a863979c2afce3ff95",
+          "src/mojo/native_fft.mojo": "ed56e8879173a22d7fb8f086e6e653deb4ef8b38a7f28d5f733d1822f547bb30",
+          "src/mojo/native_fields.mojo": "50064254aa8abf1a995fbbb0eef3a7269597ad5420a68053766fdcd56a2cec8f",
+          "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+          "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+          "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+          "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+          "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+        },
+        "abi": 2,
+        "supported_sizes": [
+          64,
+          128,
+          192,
+          256,
+          512
+        ],
+        "fft": "PocketFFT (vendored BSD-3-Clause)",
+        "command": [
+          ".build/toolchain/bin/mojo",
+          "build",
+          "--emit",
+          "shared-lib",
+          "--fp-mode",
+          "contract=off",
+          "-Xlinker",
+          ".build/fft_bridge.o",
+          "-Xlinker",
+          "-lc++",
+          "src/mojo/gpu_resident.mojo",
+          "-o",
+          ".build/libmojosteps_gpu.dylib"
+        ],
+        "mojo_version": "Mojo 1.2.0 (2016d0cd)"
+      }
+    }
+  },
+  "runner_sha256": "7a918a1c91d0534e0eaa645c770033d5b15b3002ee3a30e0c259221df1b4fd90",
+  "notes": [
+    "Complete NumPy API call including allocation, model fit, GPU stages, synchronization and float64 output conversion.",
+    "One untimed warm-up per library and size. Timed order alternates AB/BA; host runs under normal load.",
+    "Complete output comparison outside timers; each timed result must reproduce its own library output hash. No previous output held during calls.",
+    "Comparisons are against merged-baseline GPU outputs; pySTEPS qualification is separate.",
+    "No GPU cache-stall percentage is inferred from these wall-clock timings."
+  ],
+  "cases": [
+    {
+      "size": 192,
+      "members": 96,
+      "leads": 14,
+      "workers": 16,
+      "input_sha256": {
+        "history": "e39946098ba47a897fe83b44b797b8d5b4ae40435eb211814da9737f2f2d8aee",
+        "velocity": "09f240abdccb7ec9a5f2bd981b84b4a11ad569f1c508791a0c2ebb10f717bc97"
+      },
+      "seconds": {
+        "baseline": [
+          1.210252999997465,
+          0.8605557499977294,
+          1.267555500002345,
+          0.8752001660031965,
+          1.2748292920005042
+        ],
+        "candidate": [
+          0.5972804589982843,
+          0.730864458004362,
+          0.5499472500014235,
+          0.7439831249939743,
+          0.5923895829982939
+        ]
+      },
+      "comparison": {
+        "shape": [
+          96,
+          14,
+          192,
+          192
+        ],
+        "finite_masks_identical": true,
+        "max_absolute_error_dbz": 0.0,
+        "mean_absolute_error_dbz": 0.0,
+        "float32_arrays_identical": true,
+        "threshold_state_differences": {
+          "10.0": 0,
+          "15.0": 0,
+          "20.0": 0
+        },
+        "accepted": true
+      },
+      "output_sha256": {
+        "baseline": "13ee03d50999febe6a93b95f8fe52c9d9a45ee5a9533e418c5aad8fbad1df85b",
+        "candidate": "13ee03d50999febe6a93b95f8fe52c9d9a45ee5a9533e418c5aad8fbad1df85b"
+      },
+      "median_seconds": {
+        "baseline": 1.210252999997465,
+        "candidate": 0.5972804589982843
+      },
+      "speedup": 2.026272552139432
+    },
+    {
+      "size": 512,
+      "members": 96,
+      "leads": 14,
+      "workers": 16,
+      "input_sha256": {
+        "history": "604fd1654ad30346de9d0fd53cf74bb0d337c1248f4130f15cef3291ef80c67f",
+        "velocity": "a2118a99af124d355bbab0e3b4f5ecc19b887059481e4d89f6d30495b0a242d9"
+      },
+      "seconds": {
+        "baseline": [
+          10.763265416993818,
+          10.642666666004516,
+          10.640461750001123,
+          10.602110292005818,
+          10.597795208996104
+        ],
+        "candidate": [
+          5.111455332997139,
+          5.117220959000406,
+          5.0224019160013995,
+          4.979738333997375,
+          4.977441834002093
+        ]
+      },
+      "comparison": {
+        "shape": [
+          96,
+          14,
+          512,
+          512
+        ],
+        "finite_masks_identical": true,
+        "max_absolute_error_dbz": 0.0,
+        "mean_absolute_error_dbz": 0.0,
+        "float32_arrays_identical": true,
+        "threshold_state_differences": {
+          "10.0": 0,
+          "15.0": 0,
+          "20.0": 0
+        },
+        "accepted": true
+      },
+      "output_sha256": {
+        "baseline": "1359b04f1dec70c3ba8458a38038d586b0a0d0234877e31bc1ada538462f0d86",
+        "candidate": "1359b04f1dec70c3ba8458a38038d586b0a0d0234877e31bc1ada538462f0d86"
+      },
+      "median_seconds": {
+        "baseline": 10.640461750001123,
+        "candidate": 5.0224019160013995
+      },
+      "speedup": 2.1186002092147493
+    }
+  ]
+}

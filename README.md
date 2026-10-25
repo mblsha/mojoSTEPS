@@ -113,6 +113,8 @@ This is numerical agreement, not a promise of bitwise equality to pySTEPS.
 separate hosted CPU CI from real-hardware GPU checks. Public receipts use only
 the included synthetic generator. See [benchmark results](docs/BENCHMARKS.md) and the
 [matched FFTW/PocketFFT comparison](docs/FFT_COMPARISON.md).
+The [GPU optimization study](docs/GPU_OPTIMIZATION.md) compares the merged and
+optimized kernels, with reproducible stage profiling and cache-counter limits.
 [Measured RAM and Metal resource use](docs/MEMORY.md) covers the same full workload.
 
 CPU CI builds and tests on Linux and macOS. GPU CI is an opt-in manual workflow

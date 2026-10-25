@@ -1,0 +1,427 @@
+{
+  "notes": [
+    "Synchronized wall-clock stage timings change scheduling; use ordinary builds for end-to-end comparisons.",
+    "Stage sums exclude some cleanup and Python-boundary work.",
+    "Public counter inventories and Instruments exports did not yield a cache-stall rate."
+  ],
+  "hosts": {
+    "m5-ultra": {
+      "baseline": [
+        {
+          "size": 192,
+          "repeat": 0,
+          "complete_seconds": 0.48331583401886746,
+          "stage_seconds": {
+            "setup": 0.151484,
+            "rng": 0.014051000000000001,
+            "forward_fft": 0.012280999999999999,
+            "filter": 0.017055,
+            "inverse_fft": 0.045778,
+            "normalize": 0.016911000000000002,
+            "evolve_mask": 0.01925,
+            "sort": 0.118227,
+            "cdf": 0.026357000000000002,
+            "mask_update": 0.007935000000000001,
+            "advection": 0.013366,
+            "unpack": 0.025920000000000002
+          }
+        },
+        {
+          "size": 192,
+          "repeat": 1,
+          "complete_seconds": 0.35771004200796597,
+          "stage_seconds": {
+            "setup": 0.09570100000000001,
+            "rng": 0.011908000000000002,
+            "forward_fft": 0.009910000000000002,
+            "filter": 0.013569000000000001,
+            "inverse_fft": 0.037175,
+            "normalize": 0.017301000000000004,
+            "evolve_mask": 0.018027000000000005,
+            "sort": 0.09157200000000001,
+            "cdf": 0.021093999999999998,
+            "mask_update": 0.006847000000000001,
+            "advection": 0.011302000000000003,
+            "unpack": 0.005184
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 0,
+          "complete_seconds": 3.6634565420099534,
+          "stage_seconds": {
+            "setup": 0.683474,
+            "rng": 0.05619,
+            "forward_fft": 0.194444,
+            "filter": 0.05126499999999999,
+            "inverse_fft": 1.1144520000000002,
+            "normalize": 0.09158100000000001,
+            "evolve_mask": 0.10756600000000002,
+            "sort": 0.988383,
+            "cdf": 0.153865,
+            "mask_update": 0.018820999999999997,
+            "advection": 0.043670000000000014,
+            "unpack": 0.120369
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 1,
+          "complete_seconds": 3.5383230000152253,
+          "stage_seconds": {
+            "setup": 0.603867,
+            "rng": 0.05755300000000001,
+            "forward_fft": 0.212601,
+            "filter": 0.052985,
+            "inverse_fft": 1.1388840000000002,
+            "normalize": 0.091328,
+            "evolve_mask": 0.10768800000000003,
+            "sort": 0.9862440000000001,
+            "cdf": 0.152616,
+            "mask_update": 0.019041,
+            "advection": 0.043207,
+            "unpack": 0.032044
+          }
+        }
+      ],
+      "candidate": [
+        {
+          "size": 192,
+          "repeat": 0,
+          "complete_seconds": 0.33796575001906604,
+          "stage_seconds": {
+            "setup": 0.132116,
+            "rng": 0.012234000000000002,
+            "forward_fft": 0.009091000000000002,
+            "filter": 0.013955999999999998,
+            "inverse_fft": 0.03128,
+            "normalize": 0.017086000000000004,
+            "evolve_mask": 0.017298,
+            "sort": 0.031689,
+            "cdf": 0.006229,
+            "mask_update": 0.007149000000000001,
+            "advection": 0.012250000000000002,
+            "unpack": 0.030908
+          }
+        },
+        {
+          "size": 192,
+          "repeat": 1,
+          "complete_seconds": 0.2821009590115864,
+          "stage_seconds": {
+            "setup": 0.09807300000000001,
+            "rng": 0.011999000000000001,
+            "forward_fft": 0.009053,
+            "filter": 0.01384,
+            "inverse_fft": 0.032015,
+            "normalize": 0.016529000000000002,
+            "evolve_mask": 0.017762,
+            "sort": 0.03318800000000001,
+            "cdf": 0.005398999999999999,
+            "mask_update": 0.006939000000000001,
+            "advection": 0.010973,
+            "unpack": 0.012367000000000001
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 0,
+          "complete_seconds": 2.358802208007546,
+          "stage_seconds": {
+            "setup": 0.7955070000000001,
+            "rng": 0.05918400000000001,
+            "forward_fft": 0.112304,
+            "filter": 0.052951000000000005,
+            "inverse_fft": 0.621712,
+            "normalize": 0.093138,
+            "evolve_mask": 0.10709599999999998,
+            "sort": 0.273287,
+            "cdf": 0.012898000000000001,
+            "mask_update": 0.018321000000000004,
+            "advection": 0.04358800000000001,
+            "unpack": 0.12989
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 1,
+          "complete_seconds": 2.2605852920096368,
+          "stage_seconds": {
+            "setup": 0.764437,
+            "rng": 0.05342800000000001,
+            "forward_fft": 0.107437,
+            "filter": 0.05091900000000001,
+            "inverse_fft": 0.6103580000000001,
+            "normalize": 0.09278999999999998,
+            "evolve_mask": 0.10725100000000001,
+            "sort": 0.26142800000000005,
+            "cdf": 0.012756,
+            "mask_update": 0.017879,
+            "advection": 0.043184,
+            "unpack": 0.08587800000000001
+          }
+        }
+      ],
+      "candidate_manifest": {
+        "library": "libmojosteps_gpu_profile.dylib",
+        "sha256": "b225e1221d6f50d835c6a1e5cc77a1bb6593c771fef69d4b10ea89acd0440903",
+        "source_sha256": {
+          "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+          "src/mojo/gpu_core.mojo": "793d564c8e9eeca8611d426715b4892ec89bf3d152e77e2819276fa7d3b05c2d",
+          "src/mojo/gpu_fft.mojo": "b1bcc74f29dec92d03f8498dc0ddfb9f44b2d38300472ee50f4d71125829c95e",
+          "src/mojo/gpu_fields.mojo": "59a97207d5e5cd09aee1e63bc05e072f17f43d29eb3985aadb837df6159fef9f",
+          "src/mojo/gpu_model.mojo": "e341b0d4299194052572800b08b225eecfcf28e2adc045773a78ef6e8d488d28",
+          "src/mojo/gpu_noise.mojo": "b181b0ed96d62d2fc33ac6c602921aabe880dab0c13c0f0c773f7f526df6f30e",
+          "src/mojo/gpu_profile.mojo": "02d0a0453d39115a0b34c3f34a04e2438a00200c17caf85e96a86040934f3dbd",
+          "src/mojo/gpu_resident.mojo": "275010e331960e2963968145fb4dc755d015974770387c0a22223d9438c114c8",
+          "src/mojo/gpu_rng.mojo": "2e859375720f6d2cafdeec4e462b2686df63150043534ac0afa0ffb32f41b6c4",
+          "src/mojo/native_config.mojo": "73057105248a6058638995e59fe83e7952627fcec9d1bed9e53412e9efcdc082",
+          "src/mojo/native_core.mojo": "77f70216b1754dca5ca3c30229835c6cfca091b01ea5a8a863979c2afce3ff95",
+          "src/mojo/native_fft.mojo": "ed56e8879173a22d7fb8f086e6e653deb4ef8b38a7f28d5f733d1822f547bb30",
+          "src/mojo/native_fields.mojo": "50064254aa8abf1a995fbbb0eef3a7269597ad5420a68053766fdcd56a2cec8f",
+          "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+          "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+          "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+          "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+          "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+        },
+        "abi": 2,
+        "supported_sizes": [
+          64,
+          128,
+          192,
+          256,
+          512
+        ],
+        "fft": "PocketFFT (vendored BSD-3-Clause)",
+        "command": [
+          ".build/toolchain/bin/mojo",
+          "build",
+          "-D",
+          "STEPS_GPU_PROFILE=1",
+          "--emit",
+          "shared-lib",
+          "--fp-mode",
+          "contract=off",
+          "-Xlinker",
+          ".build/fft_bridge.o",
+          "-Xlinker",
+          "-lc++",
+          "src/mojo/gpu_resident.mojo",
+          "-o",
+          ".build/libmojosteps_gpu_profile.dylib"
+        ],
+        "mojo_version": "Mojo 1.2.0 (2016d0cd)"
+      }
+    },
+    "m1-ultra": {
+      "baseline": [
+        {
+          "size": 192,
+          "repeat": 0,
+          "complete_seconds": 0.878829624998616,
+          "stage_seconds": {
+            "setup": 0.183171,
+            "rng": 0.019376,
+            "forward_fft": 0.020217000000000002,
+            "filter": 0.041420000000000005,
+            "inverse_fft": 0.096922,
+            "normalize": 0.022348999999999997,
+            "evolve_mask": 0.027187,
+            "sort": 0.31895100000000004,
+            "cdf": 0.06731499999999999,
+            "mask_update": 0.014790000000000001,
+            "advection": 0.026423000000000006,
+            "unpack": 0.025762
+          }
+        },
+        {
+          "size": 192,
+          "repeat": 1,
+          "complete_seconds": 0.7887551660023746,
+          "stage_seconds": {
+            "setup": 0.115037,
+            "rng": 0.019215,
+            "forward_fft": 0.020122,
+            "filter": 0.041243,
+            "inverse_fft": 0.09662800000000002,
+            "normalize": 0.022144000000000004,
+            "evolve_mask": 0.027028,
+            "sort": 0.31899500000000003,
+            "cdf": 0.06754900000000001,
+            "mask_update": 0.014554,
+            "advection": 0.026146000000000003,
+            "unpack": 0.0070940000000000005
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 0,
+          "complete_seconds": 11.033152750002046,
+          "stage_seconds": {
+            "setup": 0.91239,
+            "rng": 0.10432700000000002,
+            "forward_fft": 0.6880839999999999,
+            "filter": 0.16606200000000002,
+            "inverse_fft": 4.0823409999999996,
+            "normalize": 0.22911099999999998,
+            "evolve_mask": 0.15065700000000004,
+            "sort": 3.6676710000000003,
+            "cdf": 0.587282,
+            "mask_update": 0.07279200000000001,
+            "advection": 0.10882600000000002,
+            "unpack": 0.209072
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 1,
+          "complete_seconds": 10.791746832997887,
+          "stage_seconds": {
+            "setup": 0.784958,
+            "rng": 0.10383300000000001,
+            "forward_fft": 0.687938,
+            "filter": 0.16589800000000002,
+            "inverse_fft": 4.082535,
+            "normalize": 0.235696,
+            "evolve_mask": 0.150843,
+            "sort": 3.6674430000000005,
+            "cdf": 0.5879130000000001,
+            "mask_update": 0.072373,
+            "advection": 0.108573,
+            "unpack": 0.089314
+          }
+        }
+      ],
+      "candidate": [
+        {
+          "size": 192,
+          "repeat": 0,
+          "complete_seconds": 0.5769873749959515,
+          "stage_seconds": {
+            "setup": 0.17464200000000002,
+            "rng": 0.019457000000000002,
+            "forward_fft": 0.019967000000000006,
+            "filter": 0.0417,
+            "inverse_fft": 0.09326699999999999,
+            "normalize": 0.022341000000000003,
+            "evolve_mask": 0.02743,
+            "sort": 0.09279000000000003,
+            "cdf": 0.00891,
+            "mask_update": 0.014053000000000001,
+            "advection": 0.026181000000000003,
+            "unpack": 0.025310000000000003
+          }
+        },
+        {
+          "size": 192,
+          "repeat": 1,
+          "complete_seconds": 0.4852576670018607,
+          "stage_seconds": {
+            "setup": 0.10381000000000001,
+            "rng": 0.01912,
+            "forward_fft": 0.019571,
+            "filter": 0.041337,
+            "inverse_fft": 0.09314900000000002,
+            "normalize": 0.022186,
+            "evolve_mask": 0.027086000000000006,
+            "sort": 0.09316400000000002,
+            "cdf": 0.008566999999999998,
+            "mask_update": 0.013814,
+            "advection": 0.026277000000000002,
+            "unpack": 0.0065390000000000005
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 0,
+          "complete_seconds": 5.231222374997742,
+          "stage_seconds": {
+            "setup": 0.77768,
+            "rng": 0.103637,
+            "forward_fft": 0.372545,
+            "filter": 0.16376700000000002,
+            "inverse_fft": 2.187014,
+            "normalize": 0.23632100000000003,
+            "evolve_mask": 0.15045400000000003,
+            "sort": 0.8379430000000002,
+            "cdf": 0.016105999999999995,
+            "mask_update": 0.06936800000000001,
+            "advection": 0.10914499999999999,
+            "unpack": 0.14556000000000002
+          }
+        },
+        {
+          "size": 512,
+          "repeat": 1,
+          "complete_seconds": 5.0941410420055036,
+          "stage_seconds": {
+            "setup": 0.7216750000000001,
+            "rng": 0.103604,
+            "forward_fft": 0.37271000000000004,
+            "filter": 0.163694,
+            "inverse_fft": 2.187161,
+            "normalize": 0.2382360000000001,
+            "evolve_mask": 0.150348,
+            "sort": 0.837801,
+            "cdf": 0.016179,
+            "mask_update": 0.069646,
+            "advection": 0.10884100000000002,
+            "unpack": 0.052507000000000005
+          }
+        }
+      ],
+      "candidate_manifest": {
+        "library": "libmojosteps_gpu_profile.dylib",
+        "sha256": "68f88c6972cec01f492266c38740e6e2d715646d6c6df9204012aada7d125791",
+        "source_sha256": {
+          "src/fft_bridge.cpp": "c0e43c0a2a948df8d82be26fb4696f88567f37c244b42df9815df50000aef237",
+          "src/mojo/gpu_core.mojo": "793d564c8e9eeca8611d426715b4892ec89bf3d152e77e2819276fa7d3b05c2d",
+          "src/mojo/gpu_fft.mojo": "b1bcc74f29dec92d03f8498dc0ddfb9f44b2d38300472ee50f4d71125829c95e",
+          "src/mojo/gpu_fields.mojo": "59a97207d5e5cd09aee1e63bc05e072f17f43d29eb3985aadb837df6159fef9f",
+          "src/mojo/gpu_model.mojo": "e341b0d4299194052572800b08b225eecfcf28e2adc045773a78ef6e8d488d28",
+          "src/mojo/gpu_noise.mojo": "b181b0ed96d62d2fc33ac6c602921aabe880dab0c13c0f0c773f7f526df6f30e",
+          "src/mojo/gpu_profile.mojo": "02d0a0453d39115a0b34c3f34a04e2438a00200c17caf85e96a86040934f3dbd",
+          "src/mojo/gpu_resident.mojo": "275010e331960e2963968145fb4dc755d015974770387c0a22223d9438c114c8",
+          "src/mojo/gpu_rng.mojo": "2e859375720f6d2cafdeec4e462b2686df63150043534ac0afa0ffb32f41b6c4",
+          "src/mojo/native_config.mojo": "73057105248a6058638995e59fe83e7952627fcec9d1bed9e53412e9efcdc082",
+          "src/mojo/native_core.mojo": "77f70216b1754dca5ca3c30229835c6cfca091b01ea5a8a863979c2afce3ff95",
+          "src/mojo/native_fft.mojo": "ed56e8879173a22d7fb8f086e6e653deb4ef8b38a7f28d5f733d1822f547bb30",
+          "src/mojo/native_fields.mojo": "50064254aa8abf1a995fbbb0eef3a7269597ad5420a68053766fdcd56a2cec8f",
+          "src/mojo/native_rng.mojo": "8f25d84b261004ebaee807f1fee002856758e7f10615c4dc490a26013027c684",
+          "src/mojo/probe_native.mojo": "45a6bac238d4c87294a34cb7e6ec2b4f958defd547d53405440fef1a7db1420f",
+          "third_party/pocketfft/LICENSE.md": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056",
+          "third_party/pocketfft/UPSTREAM.json": "3b8f7cec6525332143ecc7a166647cd2c27e6df6b1ee6f09555d2abb33189650",
+          "third_party/pocketfft/pocketfft_hdronly.h": "518a95c552aeaee352aa30122137cd9e135d23c91e2863d9272aaa758744c86d"
+        },
+        "abi": 2,
+        "supported_sizes": [
+          64,
+          128,
+          192,
+          256,
+          512
+        ],
+        "fft": "PocketFFT (vendored BSD-3-Clause)",
+        "command": [
+          ".build/toolchain/bin/mojo",
+          "build",
+          "-D",
+          "STEPS_GPU_PROFILE=1",
+          "--emit",
+          "shared-lib",
+          "--fp-mode",
+          "contract=off",
+          "-Xlinker",
+          ".build/fft_bridge.o",
+          "-Xlinker",
+          "-lc++",
+          "src/mojo/gpu_resident.mojo",
+          "-o",
+          ".build/libmojosteps_gpu_profile.dylib"
+        ],
+        "mojo_version": "Mojo 1.2.0 (2016d0cd)"
+      }
+    }
+  }
+}

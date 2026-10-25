@@ -68,3 +68,12 @@ The large-grid GPU path uses that float64 fit; its ensemble/noise, sorting,
 masking and advection remain on Metal. The 192-square numerical ordering and
 published default output hashes are retained. Four localized regression seeds
 and complete 96-member 512-square comparisons cover the discovered failure.
+
+
+GPU FFT butterflies share one paired-float complex product between both outputs.
+The resident CDF path uses merge-path partitions with shared staging for
+contiguous writes, then computes the matching cutoff once per member. Its
+value/index tie order is unchanged. Opt-in `STEPS_GPU_PROFILE=1` builds add stage
+synchronizations and timing output; ordinary builds skip those operations. See
+[GPU measurements](GPU_OPTIMIZATION.md) for performance evidence and the limits
+of cache-stall attribution.

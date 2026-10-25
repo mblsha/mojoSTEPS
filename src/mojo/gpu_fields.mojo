@@ -246,14 +246,10 @@ def merge_sort[SIZE: Int = 192](source: FPtr, source_i: IPtr, target: FPtr, targ
     target_i[dest] = index
 
 
-def cdf_match[SIZE: Int = 192](keys: FPtr, indices: IPtr, lows: FPtr, dry: IPtr, params: FPtr, matched: FPtr, count: Int32):
+@inline(.always)
+def member_cutoff[SIZE: Int](dry: IPtr, params: FPtr, m: Int) -> D2:
     comptime PIXELS = SIZE * SIZE
     comptime PARAM_TARGET = 60
-    var i = global_idx.x
-    if i >= Int(count) * PIXELS:
-        return
-    var m = i // PIXELS
-    var rank = i % PIXELS
     var target = params + PARAM_TARGET
     var low = get(target, 0)
     var cutoff = low
@@ -273,6 +269,41 @@ def cdf_match[SIZE: Int = 192](keys: FPtr, indices: IPtr, lows: FPtr, dry: IPtr,
         var index = dd_floor(r)
         var fraction = dd_add(r, -D2(Float32(index), 0))
         cutoff = dd_add(dd_mul(get(target, index), dd_add(D2(1, 0), -fraction)), dd_mul(get(target, min(index + 1, PIXELS - 1)), fraction))
+    return cutoff
+
+
+def prepare_cdf[SIZE: Int](dry: IPtr, params: FPtr, cutoffs: FPtr, count: Int32):
+    var m = global_idx.x
+    if m < Int(count):
+        put(cutoffs, m, member_cutoff[SIZE](dry, params, m))
+
+
+def apply_cdf[SIZE: Int](keys: FPtr, indices: IPtr, lows: FPtr, params: FPtr, cutoffs: FPtr, matched: FPtr, count: Int32):
+    comptime PIXELS = SIZE * SIZE
+    var i = global_idx.x
+    if i >= Int(count) * PIXELS:
+        return
+    var m = i // PIXELS
+    var rank = i % PIXELS
+    var target = params + 60
+    var low = get(target, 0)
+    var value = get(target, rank)
+    if less(value, get(cutoffs, m)) or equal(get(keys, i), get(lows, m)):
+        value = low
+    put(matched, m * PIXELS + Int(indices[i]), value)
+
+
+def cdf_match[SIZE: Int = 192](keys: FPtr, indices: IPtr, lows: FPtr, dry: IPtr, params: FPtr, matched: FPtr, count: Int32):
+    comptime PIXELS = SIZE * SIZE
+    comptime PARAM_TARGET = 60
+    var i = global_idx.x
+    if i >= Int(count) * PIXELS:
+        return
+    var m = i // PIXELS
+    var rank = i % PIXELS
+    var target = params + PARAM_TARGET
+    var low = get(target, 0)
+    var cutoff = member_cutoff[SIZE](dry, params, m)
     var value = get(target, rank)
     if less(value, cutoff) or equal(get(keys, i), get(lows, m)):
         value = low
@@ -364,3 +395,58 @@ def advection[SIZE: Int = 192](field: FPtr, velocity: FPtr, displacement: FPtr, 
     put(displacement, base + p, dx)
     put(displacement, base + PIXELS + p, dy)
     put(output, (m * Int(leads) + Int(lead)) * PIXELS + p, sample[SIZE](field, m * PIXELS, dd_add(x, dx), dd_add(y, dy), False))
+
+
+def merge_sorted_tiles[SIZE: Int = 192](source: FPtr, source_i: IPtr, target: FPtr, target_i: IPtr, width: Int32, total: Int32):
+    """Merge-path partitions: one binary search per four contiguous results.
+
+    Each thread merges four values in registers. Shared staging then writes a
+    complete tile with consecutive lanes touching consecutive global addresses.
+    The (paired-float key, original pixel index) ordering matches merge_sort.
+    """
+    comptime PIXELS = SIZE * SIZE
+    var t = thread_idx.x
+    var base = block_idx.x * 1024
+    var member = base // PIXELS
+    var pixel = base % PIXELS
+    var w = Int(width)
+    var start = (pixel // (2 * w)) * 2 * w
+    var middle = min(start + w, PIXELS)
+    var end = min(start + 2 * w, PIXELS)
+    var diagonal = pixel - start + 4 * t
+    var a_count = middle - start
+    var b_count = end - middle
+    var lo = max(0, diagonal - b_count)
+    var hi = min(diagonal, a_count)
+    var member_base = member * PIXELS
+    while lo < hi:
+        var a = (lo + hi) // 2
+        var b = diagonal - a
+        var ai = member_base + start + a
+        var bi = member_base + middle + b - 1
+        if b > 0 and a < a_count and ordered(get(source, ai), source_i[ai], get(source, bi), source_i[bi]):
+            lo = a + 1
+        else:
+            hi = a
+    var a = lo
+    var b = diagonal - a
+    var keys = unsafe_stack_allocation[1024, D2, address_space=.SHARED]()
+    var indices = unsafe_stack_allocation[1024, Int32, address_space=.SHARED]()
+    comptime for j in range(4):
+        var take_a = b >= b_count
+        if a < a_count and b < b_count:
+            var ai = member_base + start + a
+            var bi = member_base + middle + b
+            take_a = ordered(get(source, ai), source_i[ai], get(source, bi), source_i[bi])
+        var index = member_base + (start + a if take_a else middle + b)
+        keys[4 * t + j] = get(source, index)
+        indices[4 * t + j] = source_i[index]
+        if take_a:
+            a += 1
+        else:
+            b += 1
+    barrier()
+    comptime for j in range(4):
+        var offset = t + 256 * j
+        put(target, base + offset, keys[offset])
+        target_i[base + offset] = indices[offset]
